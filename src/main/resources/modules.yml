@@ -1,0 +1,7 @@
+enabled-modules:
+  - "email-breach-detection"
+  - "minecraft-lookup"
+  - "ip-lookup"
+  - "google-dorks"
+  - "phone-cnam-lookup"
+  - "reverse-phone-lookup"
