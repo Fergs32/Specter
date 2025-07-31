@@ -2,6 +2,7 @@ package org.fergs.modules.impl.breachdetector;
 
 import okhttp3.*;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
@@ -12,17 +13,20 @@ public class AvastBreachDetectorImpl {
     private final List<String> proxies;
     private final String proxyType;
     private final String targetEmail;
+    private final JTextArea jTextArea;
 
-    public AvastBreachDetectorImpl(List<String> proxies, String proxyType, String targetEmail) {
+    public AvastBreachDetectorImpl(List<String> proxies, String proxyType, String targetEmail, JTextArea jTextArea) {
         this.proxies = new ArrayList<>(proxies);
         this.proxyType = proxyType;
         this.targetEmail = targetEmail;
+        this.jTextArea = jTextArea;
     }
 
-    public AvastBreachDetectorImpl(String proxyType, String targetEmail) {
+    public AvastBreachDetectorImpl(String proxyType, String targetEmail, JTextArea jTextArea) {
         this.proxies = new ArrayList<>();
         this.proxyType = proxyType;
         this.targetEmail = targetEmail;
+        this.jTextArea = jTextArea;
     }
 
     public void run() {
@@ -85,7 +89,6 @@ public class AvastBreachDetectorImpl {
 
 
             } catch (IOException e) {
-                // on network error, remove bad proxy and retry
                 if (toDeleteProxy != null) {
                     proxies.remove(toDeleteProxy);
                     System.err.println("Removed bad proxy: " + toDeleteProxy);

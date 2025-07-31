@@ -121,7 +121,7 @@ public class AvastBreachDetectionUI extends AbstractModule {
                 @Override
                 protected java.util.List<String> doInBackground() {
                     AvastBreachDetectorImpl impl =
-                            new AvastBreachDetectorImpl(proxyType, emailField.getText());
+                            new AvastBreachDetectorImpl(proxyType, emailField.getText(), resultsArea);
                     impl.run();
                     return java.util.List.of("Test Breach 1", "Test Breach 2", "Test Breach 3");
                 }

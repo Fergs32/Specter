@@ -15,7 +15,6 @@ public class ModuleManager {
     /** Call once at startup to register all available modules. */
     public void registerModule(AbstractModule module) {
         registry.put(module.getName(), module);
-        System.out.println("Registered module: " + module.getName());
     }
 
     /** Return the names of modules that are registered. */
