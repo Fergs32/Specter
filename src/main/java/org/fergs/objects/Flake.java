@@ -1,7 +1,12 @@
 package org.fergs.objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Random;
 
+
+@Getter @Setter
 public final class Flake {
     final Random rand = new Random();
     public int x;

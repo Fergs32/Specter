@@ -2,31 +2,55 @@ package org.fergs.managers;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.fergs.modules.AbstractModule;
+import org.fergs.modules.impl.breachdetector.AvastBreachDetectorImpl;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
-@Getter @Setter
 public class ModuleManager {
-    public Set<String> enabledModules = new HashSet<>();
+    private final Map<String, AbstractModule> registry = new LinkedHashMap<>();
 
-    public ModuleManager() {
-
+    /** Call once at startup to register all available modules. */
+    public void registerModule(AbstractModule module) {
+        registry.put(module.getName(), module);
+        System.out.println("Registered module: " + module.getName());
     }
 
-
-    public void loadModule(String name) {
-        try {
-            enabledModules.add(name);
-            Thread.sleep(500);
-        } catch (InterruptedException ignored) {}
+    /** Return the names of modules that are registered. */
+    public Set<String> getRegisteredModuleNames() {
+        return Collections.unmodifiableSet(registry.keySet());
     }
 
-    public void unloadModule(String name) {
-        try {
-            enabledModules.remove(name);
-            Thread.sleep(500);
-        } catch (InterruptedException ignored) {}
+    /** Return only those modules currently enabled. */
+    public List<String> getEnabledModules() {
+        return registry.values().stream()
+                .filter(AbstractModule::isEnabled)
+                .map(AbstractModule::getName)
+                .collect(Collectors.toList());
+    }
+
+    /** Enable a module (if not already); calls onEnable(). */
+    public void enableModule(String name) {
+        AbstractModule m = registry.get(name);
+        if (m != null && !m.isEnabled()) {
+            m.setEnabled(true);
+            m.onEnable();
+        }
+    }
+
+    /** Disable a module; calls onDisable(). */
+    public void disableModule(String name) {
+        AbstractModule m = registry.get(name);
+        if (m != null && m.isEnabled()) {
+            m.setEnabled(false);
+            m.onDisable();
+        }
+    }
+
+    /** Get the module object for a name. */
+    public AbstractModule getModule(String name) {
+        return registry.get(name);
     }
 }

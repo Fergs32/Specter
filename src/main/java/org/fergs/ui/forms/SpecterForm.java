@@ -1,21 +1,23 @@
 package org.fergs.ui.forms;
 
 import org.fergs.Specter;
+import org.fergs.managers.ModuleManager;
+import org.fergs.modules.AbstractModule;
+import org.fergs.modules.impl.breachdetector.AvastBreachDetectionUI;
+import org.fergs.scheduler.SpecterScheduler;
 import org.fergs.ui.AbstractForm;
 import org.fergs.ui.panels.InitializationParticlePanel;
-import org.fergs.utils.JButtonHelper;
-import org.jetbrains.annotations.NotNull;
+import org.fergs.ui.panels.SlidingPanel;
+import org.fergs.utils.JHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SpecterForm extends AbstractForm {
-
     private Point dragOffset;
 
     static {
@@ -52,6 +54,8 @@ public class SpecterForm extends AbstractForm {
     }
     @Override
     protected void initForm() {
+        getRootPane().setBorder(BorderFactory.createEmptyBorder());
+
         final JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.setBorder(new EmptyBorder(10, 5, 0, 5));
@@ -61,12 +65,12 @@ public class SpecterForm extends AbstractForm {
 
         Dimension btnSize = new Dimension(40, 40);
 
-        JButton minimize = JButtonHelper.createHoverButton("_", 20);
+        JButton minimize = JHelper.createHoverButton("_", 20);
         minimize.setPreferredSize(btnSize);
         minimize.addActionListener(e -> setExtendedState(JFrame.ICONIFIED));
         windowButtons.add(minimize);
 
-        JButton exit = JButtonHelper.createHoverButton("X", 20);
+        JButton exit = JHelper.createHoverButton("X", 20);
         exit.setPreferredSize(btnSize);
         exit.addActionListener(e -> System.exit(0));
         windowButtons.add(exit);
@@ -103,39 +107,63 @@ public class SpecterForm extends AbstractForm {
         bot.add(copy, BorderLayout.WEST);
         getContentPane().add(bot, BorderLayout.SOUTH);
 
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(0x1E1E1E));
-        leftPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        Specter.getInstance().getModuleManager().registerModule(new AvastBreachDetectionUI());
 
-        JLabel modulesLabel = new JLabel("Enabled Modules");
-        modulesLabel.setFont(new Font("Consolas", Font.BOLD, 18));
-        modulesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        leftPanel.add(modulesLabel);
-        leftPanel.add(Box.createVerticalStrut(10));
+        SlidingPanel modulesPanel = new SlidingPanel(50, 220, 10, 10, (getHeight() - 50));
+        modulesPanel.setRailBackground(new Color(0x2A2A2A));
+        modulesPanel.setExpandedBackground(new Color(0x2A2A2A));
+        modulesPanel.addModuleLabel("Enabled Modules");
+        var enabled = Specter.getInstance().getModuleManager().getRegisteredModuleNames();
+        if (!enabled.isEmpty()) {
+            for (String name : Specter.getInstance().getModuleManager().getRegisteredModuleNames()) {
+                AbstractModule mod = Specter.getInstance().getModuleManager().getModule(name);
+                modulesPanel.addModuleButton(name, 14, e -> {
+                    Specter.getInstance().getModuleManager().enableModule(name);
+                    JPanel moduleUI = mod.getUI();
+                    moduleUI.setPreferredSize(new Dimension(650, 475));
+                    moduleUI.setOpaque(false);
+                    moduleUI.setBorder(new EmptyBorder(3, 3, 3, 3));
 
-        if (!Specter.getInstance().getModuleManager().getEnabledModules().isEmpty()) {
-            for (String moduleName : Specter.getInstance().getModuleManager().getEnabledModules()) {
-                JButton moduleButton = JButtonHelper.createHoverButton(moduleName, 14);
-                moduleButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                moduleButton.setMaximumSize(new Dimension(200, 40));
-                moduleButton.addActionListener(e ->
-                        JOptionPane.showMessageDialog(this,
-                                "Opening module: " + moduleName,
-                                "Module Selected",
-                                JOptionPane.INFORMATION_MESSAGE)
-                );
-                leftPanel.add(moduleButton);
-                leftPanel.add(Box.createVerticalStrut(8));
+                    JPanel contentRegion = getContentRegion();
+                    contentRegion.removeAll();
+                    contentRegion.setLayout(new GridBagLayout());
+                    GridBagConstraints gridBagConstraints = new GridBagConstraints();
+                    gridBagConstraints.gridx = 0;
+                    gridBagConstraints.gridy = 0;
+                    gridBagConstraints.weightx = 1;
+                    gridBagConstraints.weighty = 1;
+                    gridBagConstraints.anchor = GridBagConstraints.CENTER;
+                    gridBagConstraints.fill = GridBagConstraints.NONE;
+                    contentRegion.add(moduleUI, gridBagConstraints);
+                    contentRegion.revalidate();
+                    contentRegion.repaint();
+                });
+
+                SpecterScheduler.schedule(() -> {
+                    mod.onLoad(this);
+                }, 1000, TimeUnit.MILLISECONDS);
             }
         } else {
-            final JLabel noneLabel = new JLabel("No modules enabled.");
-            noneLabel.setFont(new Font("Consolas", Font.ITALIC, 14));
-            noneLabel.setForeground(Color.GRAY);
-            noneLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            leftPanel.add(noneLabel);
+            modulesPanel.addEmptyLabel("No modules enabled.");
         }
 
-        getContentPane().add(leftPanel, BorderLayout.WEST);
+        modulesPanel.setBounds(10, 10,
+                modulesPanel.getPreferredSize().width,
+                getHeight() - 50);
+        getRootPane().getLayeredPane()
+                .add(modulesPanel, JLayeredPane.PALETTE_LAYER);
+    }
+
+    private JPanel getContentRegion() {
+        Container cp = getContentPane();
+        for (Component c : cp.getComponents()) {
+            if (BorderLayout.CENTER.equals(
+                    ((BorderLayout)cp.getLayout())
+                            .getConstraints(c))) {
+                return (JPanel)c;
+            }
+        }
+
+        return (JPanel)cp;
     }
 }

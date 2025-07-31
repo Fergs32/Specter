@@ -1,10 +1,13 @@
 package org.fergs.ui.forms;
 
 import org.fergs.Specter;
+import org.fergs.managers.ConfigurationManager;
 import org.fergs.managers.ModuleManager;
 import org.fergs.ui.AbstractForm;
+import org.fergs.ui.labels.FadingLabel;
 import org.fergs.ui.panels.InitializationParticlePanel;
-import org.fergs.utils.JButtonHelper;
+import org.fergs.utils.JHelper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,10 +19,16 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static org.fergs.utils.JHelper.*;
+
 public class InitializationForm extends AbstractForm {
 
     private Point dragOffset;
+    private FadingLabel titleLabel;
+    private FadingLabel motoLabel;
+    private FadingLabel copyLabel;
     private JLabel progressLabel;
+    private FadingLabel promptLabel;
     private List<String> enabledModules;
 
     static {
@@ -32,31 +41,46 @@ public class InitializationForm extends AbstractForm {
     public InitializationForm() {
         super("", 500, 300);
 
-        final MouseAdapter ma = new MouseAdapter() {
+        MouseAdapter ma = new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 dragOffset = e.getPoint();
             }
+
             public void mouseDragged(MouseEvent e) {
-                final Point loc = getLocation();
+                Point loc = getLocation();
                 setLocation(loc.x + e.getX() - dragOffset.x,
                         loc.y + e.getY() - dragOffset.y);
             }
         };
-
         getContentPane().addMouseListener(ma);
         getContentPane().addMouseMotionListener(ma);
 
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
-                startLoading();
+                fadeInPrompt("Welcome back, Specter.", 30, 20, promptLabel, ()  ->
+                        holdAndFadeOutPrompt(2000, 30, 20, promptLabel,  () ->
+                                fadeInPrompt("Let me get things set up for you.", 30, 20, promptLabel, () ->
+                                        holdAndFadeOutPrompt(2000, 30, 20, promptLabel, () -> {
+                                            fadeInComponent(titleLabel, 30, 20, () ->
+                                                    fadeInComponent(motoLabel, 30, 20, () ->
+                                                            fadeInComponent(copyLabel, 30, 20, () -> {
+                                                                progressLabel.setVisible(true);
+                                                                startLoading();
+                                                            })
+                                                    )
+                                            );
+                                        })
+                                )
+                        )
+                );
             }
         });
     }
 
     @Override
     protected JPanel createContentPane() {
-        final InitializationParticlePanel sp = new InitializationParticlePanel();
+        InitializationParticlePanel sp = new InitializationParticlePanel();
         sp.setLayout(new BorderLayout());
         return sp;
     }
@@ -67,63 +91,62 @@ public class InitializationForm extends AbstractForm {
         top.setOpaque(false);
         top.setBorder(new EmptyBorder(10, 10, 0, 10));
 
-        JButton exit = JButtonHelper.createHoverButton("X", 30);
+        JButton exit = JHelper.createHoverButton("X", 30);
         exit.addActionListener(e -> System.exit(0));
         top.add(exit, BorderLayout.EAST);
 
-        final JPanel titles = new JPanel();
+        JPanel titles = new JPanel();
         titles.setOpaque(false);
         titles.setLayout(new BoxLayout(titles, BoxLayout.Y_AXIS));
-        JLabel title = new JLabel("Specter", SwingConstants.CENTER);
-        title.setFont(new Font("Consolas", Font.BOLD, 28));
-        titles.add(title);
 
-        JLabel moto = new JLabel("Unseen, Unheard & Unstoppable", SwingConstants.CENTER);
-        moto.setFont(new Font("Consolas", Font.ITALIC, 16));
-        moto.setForeground(new Color(0x888888));
-        titles.add(moto);
+        promptLabel = new FadingLabel("", new Font("Consolas", Font.PLAIN, 18), new Color(0x66FFCC));
+        promptLabel.setAlpha(0f);
+        getContentPane().add(promptLabel, BorderLayout.CENTER);
+
+        titleLabel = new FadingLabel("Specter", new Font("Consolas", Font.BOLD, 28), new Color(0x66FFCC));
+        titles.add(titleLabel);
+
+        motoLabel = new FadingLabel("Unseen, Unheard & Unstoppable", new Font("Consolas", Font.ITALIC, 16), new Color(0x888888));
+        titles.add(motoLabel);
+
         top.add(titles, BorderLayout.CENTER);
         getContentPane().add(top, BorderLayout.NORTH);
-
         JPanel bot = new JPanel(new BorderLayout());
         bot.setOpaque(false);
         bot.setBorder(new EmptyBorder(0, 10, 10, 10));
 
-        JLabel copy = new JLabel("© 2025 Specter Development");
-        copy.setFont(new Font("Consolas", Font.PLAIN, 12));
-        copy.setForeground(new Color(0x888888));
-        bot.add(copy, BorderLayout.WEST);
+        copyLabel = new FadingLabel("© 2025 Specter Development", new Font("Consolas", Font.PLAIN, 12), new Color(0x888888));
+        bot.add(copyLabel, BorderLayout.WEST);
 
         progressLabel = new JLabel("Loading modules...");
         progressLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
         progressLabel.setForeground(new Color(0x66FFCC));
         progressLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        progressLabel.setVisible(false);                // hide until footer has faded in
         bot.add(progressLabel, BorderLayout.EAST);
 
         getContentPane().add(bot, BorderLayout.SOUTH);
     }
 
     private void startLoading() {
-        final SwingWorker<Void, String> loader = new SwingWorker<>() {
+        new SwingWorker<Void, String>() {
             @Override
             protected Void doInBackground() {
                 Specter.getInstance().getConfigurationManager()
                         .loadFromClasspath("modules.yml");
-                enabledModules = Specter
-                        .getInstance()
+                enabledModules = Specter.getInstance()
                         .getConfigurationManager()
                         .getStringList("enabled-modules");
 
-                for (final String moduleName : enabledModules) {
+                for (String moduleName : enabledModules) {
                     publish("Loading " + moduleName + "...");
-                    Specter.getInstance().getModuleManager().loadModule(moduleName);
                 }
                 return null;
             }
 
             @Override
-            protected void process(java.util.List<String> chunks) {
-                progressLabel.setText(chunks.getLast());
+            protected void process(List<String> chunks) {
+                progressLabel.setText(chunks.get(chunks.size() - 1));
             }
 
             @Override
@@ -135,11 +158,9 @@ public class InitializationForm extends AbstractForm {
                         dispose();
                     });
                 } catch (InterruptedException | ExecutionException ex) {
-                    ex.printStackTrace();
                     System.exit(1);
                 }
             }
-        };
-        loader.execute();
+        }.execute();
     }
 }
