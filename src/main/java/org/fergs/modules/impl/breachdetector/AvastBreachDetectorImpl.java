@@ -1,12 +1,21 @@
 package org.fergs.modules.impl.breachdetector;
 
 import okhttp3.*;
+import org.fergs.objects.Breach;
+import org.fergs.scheduler.SpecterScheduler;
+import org.fergs.ui.forms.BreachGraphForm;
+import org.fergs.ui.forms.SpecterForm;
+import org.fergs.ui.notifications.ToastNotification;
+import org.fergs.utils.BreachParser;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AvastBreachDetectorImpl {
     private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
@@ -14,16 +23,10 @@ public class AvastBreachDetectorImpl {
     private final String proxyType;
     private final String targetEmail;
     private final JTextArea jTextArea;
+    private boolean running = true;
 
     public AvastBreachDetectorImpl(List<String> proxies, String proxyType, String targetEmail, JTextArea jTextArea) {
         this.proxies = new ArrayList<>(proxies);
-        this.proxyType = proxyType;
-        this.targetEmail = targetEmail;
-        this.jTextArea = jTextArea;
-    }
-
-    public AvastBreachDetectorImpl(String proxyType, String targetEmail, JTextArea jTextArea) {
-        this.proxies = new ArrayList<>();
         this.proxyType = proxyType;
         this.targetEmail = targetEmail;
         this.jTextArea = jTextArea;
@@ -33,9 +36,17 @@ public class AvastBreachDetectorImpl {
         Random rand = new Random();
         final int TIMEOUT_MS = 10_000;
 
-        while (true) {
+        if (proxies.isEmpty()) {
+            jTextArea.append("[LOG] No proxies found. Running without proxy.\n");
+        } else {
+            jTextArea.append("[LOG] Loaded " + proxies.size() + " proxies.\n");
+        }
+
+        while (running) {
             OkHttpClient client;
             String toDeleteProxy = null;
+
+            jTextArea.append("[LOG] Starting Avast breach detection for: " + targetEmail + "\n");
 
             if (!"NONE".equalsIgnoreCase(proxyType) && !proxies.isEmpty()) {
                 String proxyStr = proxies.get(rand.nextInt(proxies.size()));
@@ -57,7 +68,7 @@ public class AvastBreachDetectorImpl {
                         .writeTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
                         .build();
 
-                System.out.printf("Using proxy: %s%n", proxyStr);
+                jTextArea.append("[LOG] Using proxy: " + proxyStr + "\n");
             } else {
                 client = new OkHttpClient.Builder()
                         .connectTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -85,7 +96,62 @@ public class AvastBreachDetectorImpl {
                 }
                 String body = Objects.requireNonNull(response.body()).string();
 
-                System.out.println("is this shit api patched? lets find out! = " + body);
+                running = false;
+
+                if (body.contains("breaches")) {
+                    final List<Breach> breachesFound =  BreachParser.parse(body);
+                    AtomicInteger count = new AtomicInteger(0);
+                    if (breachesFound.size() > 5) {
+                        SpecterScheduler.schedule(() -> ToastNotification.builder(SpecterForm.frame)
+                                .setBackground(new Color(0x2A2A2A))
+                                .setTitleColor(new Color(0x00FF88))
+                                .setMessageColor(new Color(0xF5F5F5))
+                                .setTitleFont(new Font("JetBrains Mono", Font.BOLD, 16))
+                                .setMessageFont(new Font("JetBrains Mono", Font.PLAIN, 13))
+                                .setSize(255, 100)
+                                .setFadeInStep(25)
+                                .setFadeOutStep(35)
+                                .setDuration(3500)
+                                .setTitle("☠︎ Breach(s) Detected")
+                                .setMessage(
+                                        "Multiple breaches detected for: " + targetEmail +
+                                                "\nTotal Breaches: " + breachesFound.size()
+                                )
+                                .show(), 300L * count.getAndIncrement(), TimeUnit.MILLISECONDS);
+                    } else {
+                        for (Breach breach : breachesFound) {
+                            SpecterScheduler.schedule(() -> ToastNotification.builder(SpecterForm.frame)
+                                    .setBackground(new Color(0x2A2A2A))
+                                    .setTitleColor(new Color(0x00FF88))
+                                    .setMessageColor(new Color(0xF5F5F5))
+                                    .setTitleFont(new Font("JetBrains Mono", Font.BOLD, 16))
+                                    .setMessageFont(new Font("JetBrains Mono", Font.PLAIN, 13))
+                                    .setSize(255, 100)
+                                    .setFadeInStep(25)
+                                    .setFadeOutStep(35)
+                                    .setDuration(3500)
+                                    .setTitle("☠︎ Breach Detected")
+                                    .setMessage(
+                                            "Website: " + breach.getSite() +
+                                                    "\nDate: "    + breach.getPublishDate() +
+                                                    "\nRecords: " + breach.getRecordsCount()
+                                    )
+                                    .show(), 300L * count.getAndIncrement(), TimeUnit.MILLISECONDS);
+
+                            jTextArea.append("[LOG] Breach found: "
+                                    + breach.getSite() + " on " + breach.getPublishDate() + "\n");
+                        }
+                    }
+
+                    SwingUtilities.invokeLater(() -> {
+                        BreachGraphForm win = new BreachGraphForm(targetEmail, breachesFound);
+                        win.display();
+                    });
+
+                } else {
+                    jTextArea.append("[LOG] No breaches found for: " + targetEmail + "\n");
+                }
+
 
 
             } catch (IOException e) {
@@ -96,6 +162,8 @@ public class AvastBreachDetectorImpl {
                     e.printStackTrace();
                     break;
                 }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
     }

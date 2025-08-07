@@ -17,7 +17,7 @@ public class FadingLabel extends JLabel {
     }
     @Override
     protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D)g.create();
+        final Graphics2D g2 = (Graphics2D)g.create();
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         super.paintComponent(g2);
         g2.dispose();

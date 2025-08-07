@@ -1,5 +1,8 @@
 package org.fergs.ui.notifications;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -8,12 +11,10 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simple toast notification system for Swing.
- * Usage:
- *    Toast.show(mainFrame, "Hello, world!", 3000);
- */
-public class ToastNotification {
+
+
+@Getter @Setter
+public final class ToastNotification {
     private static final List<JWindow> toasts = new ArrayList<>();
     private static final int GAP = 10;
 
@@ -41,9 +42,9 @@ public class ToastNotification {
     }
 
     public static ToastNotification builder(Component ownerComponent) {
-        ToastNotification tn = new ToastNotification();
+        final ToastNotification tn = new ToastNotification();
 
-        Window window = SwingUtilities.getWindowAncestor(ownerComponent);
+        final Window window = SwingUtilities.getWindowAncestor(ownerComponent);
         if (window instanceof JFrame) {
             tn.owner = (JFrame) window;
         } else {
@@ -59,11 +60,6 @@ public class ToastNotification {
 
     public ToastNotification setMessage(String message) {
         this.message = message;
-        return this;
-    }
-
-    public ToastNotification setIcon(Icon icon) {
-        this.icon = icon;
         return this;
     }
 
@@ -113,56 +109,48 @@ public class ToastNotification {
         return this;
     }
 
-
-
     public void show() {
-        if (owner == null || title == null) throw new IllegalStateException("Owner and title are required.");
+        if (owner == null || title == null) {
+            throw new IllegalStateException("Owner frame and title are required.");
+        }
 
-        // Toast Window
-        JWindow win = new JWindow(owner);
+        final JWindow win = new JWindow(owner);
         win.setSize(width, height);
-        win.setBackground(new Color(0, 0, 0, 0));
+        win.setBackground(new Color(0,0,0,0));
 
-        // Panel
-        JPanel panel = new JPanel(new BorderLayout());
+        final JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(background);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x00FF88), 2), // neon border
-                new EmptyBorder(8, 12, 8, 12)
+                BorderFactory.createLineBorder(titleColor, 2),
+                new EmptyBorder(8,12,8,12)
         ));
 
-        // Title (e.g. "Module Loaded")
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(titleFont);
-        titleLabel.setForeground(titleColor);
-
-        // Message (e.g. module info)
-        JLabel messageLabel = new JLabel("<html>" + message.replace("\n", "<br>") + "</html>");
-        messageLabel.setFont(messageFont);
-        messageLabel.setForeground(messageColor);
-
-        JPanel textPanel = new JPanel(new GridLayout(2, 1));
-        textPanel.setOpaque(false);
-        textPanel.add(titleLabel);
-        textPanel.add(messageLabel);
-
         if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
+            final JLabel iconLabel = new JLabel(icon);
             panel.add(iconLabel, BorderLayout.WEST);
         }
+
+        final JLabel titleLbl = new JLabel(title);
+        titleLbl.setFont(titleFont);
+        titleLbl.setForeground(titleColor);
+
+        final JLabel msgLbl = new JLabel("<html>" + message.replace("\n","<br>") + "</html>");
+        msgLbl.setFont(messageFont);
+        msgLbl.setForeground(messageColor);
+
+        final JPanel textPanel = new JPanel(new GridLayout(2,1));
+        textPanel.setOpaque(false);
+        textPanel.add(titleLbl);
+        textPanel.add(msgLbl);
+
         panel.add(textPanel, BorderLayout.CENTER);
-
         win.add(panel);
-
-        // Position Top-right
-        Point loc = owner.getLocationOnScreen();
-        int x = loc.x + owner.getWidth() - width - GAP;
-        int y = loc.y + GAP + toasts.size() * (height + GAP);
-        win.setLocation(x, y);
 
         toasts.add(win);
         win.setOpacity(0f);
         win.setVisible(true);
+
+        repositionAll();
 
         fadeIn(win);
     }

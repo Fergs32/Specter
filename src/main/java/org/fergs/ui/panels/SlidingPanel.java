@@ -30,12 +30,14 @@ public final class SlidingPanel extends JPanel {
         this.startY = startY;
         this.panelHeight = panelHeight;
 
+
+        setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(collapsedWidth, getPreferredSize().height));
         setBackground(railBackground);
 
-        JLabel hamburger = new JLabel("\u2630", SwingConstants.CENTER);
+        final JLabel hamburger = new JLabel("\u2630", SwingConstants.CENTER);
         hamburger.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
         hamburger.setOpaque(true);
         hamburger.setBackground(new Color(0x2A2A2A));
@@ -44,7 +46,7 @@ public final class SlidingPanel extends JPanel {
 
         add(hamburger, BorderLayout.NORTH);
 
-        JPanel iconHolder = new JPanel(new BorderLayout());
+        final JPanel iconHolder = new JPanel(new BorderLayout());
         iconHolder.setOpaque(false);
         iconHolder.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
         iconHolder.add(hamburger, BorderLayout.CENTER);
@@ -75,6 +77,22 @@ public final class SlidingPanel extends JPanel {
         if (!slideTimer.isRunning()) slideTimer.start();
     }
 
+    /** Draw rounded background */
+    @Override
+    protected void paintComponent(Graphics g) {
+        final Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        final Color bg = expanding ? expandedBackground : railBackground;
+        g2.setColor(bg);
+
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+        g2.dispose();
+
+        super.paintComponent(g);
+    }
+
+
     private void installGlobalMouseTracker() {
         if (awtMouseTracker != null) {
             return;
@@ -84,8 +102,8 @@ public final class SlidingPanel extends JPanel {
             if (!(event instanceof MouseEvent me)) return;
             if (me.getID() != MouseEvent.MOUSE_MOVED) return;
 
-            Point screenPt = me.getLocationOnScreen();
-            Rectangle panelBounds = new Rectangle(getLocationOnScreen(), getSize());
+            final Point screenPt = me.getLocationOnScreen();
+            final Rectangle panelBounds = new Rectangle(getLocationOnScreen(), getSize());
 
             if (!panelBounds.contains(screenPt)) {
                 expanding = false;
@@ -118,7 +136,7 @@ public final class SlidingPanel extends JPanel {
 
     /** Add your “Enabled Modules” label */
     public void addModuleLabel(String text) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
+        final JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setFont(new Font("Consolas", Font.BOLD, 16));
         lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
         inner.add(lbl);
@@ -127,7 +145,7 @@ public final class SlidingPanel extends JPanel {
 
     /** Add each module button */
     public void addModuleButton(String name, int fontSize, ActionListener action) {
-        JButton btn = JHelper.createHoverButton(name, fontSize);
+        final JButton btn = JHelper.createFancyHoverButton(name, fontSize, true);
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(expandedWidth - 40, 36));
         btn.addActionListener(action);
@@ -137,7 +155,7 @@ public final class SlidingPanel extends JPanel {
 
     /** When no modules are enabled */
     public void addEmptyLabel(String text) {
-        JLabel none = new JLabel(text, SwingConstants.CENTER);
+        final JLabel none = new JLabel(text, SwingConstants.CENTER);
         none.setFont(new Font("Consolas", Font.ITALIC, 14));
         none.setForeground(Color.GRAY);
         none.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -146,8 +164,8 @@ public final class SlidingPanel extends JPanel {
 
     /** Slide‑in/slide‑out animation, and hide inner when fully collapsed */
     private void animate(int step) {
-        int curW   = getWidth();
-        int target = expanding ? expandedWidth : collapsedWidth;
+        final int curW = getWidth();
+        final int target = expanding ? expandedWidth : collapsedWidth;
         if (curW == target) {
             slideTimer.stop();
             if (!expanding) {
@@ -157,13 +175,15 @@ public final class SlidingPanel extends JPanel {
             return;
         }
 
-        int delta = expanding ? step : -step;
-        int nextW = Math.min(expandedWidth, Math.max(collapsedWidth, curW + delta));
+        final int delta = expanding ? step : -step;
+        final int nextW = Math.min(expandedWidth, Math.max(collapsedWidth, curW + delta));
 
-        int insetX = getX();
-        setBounds(insetX, startY, nextW, panelHeight);
+        final int x = getX();
+        final int y = getY();
+        final int h = getHeight();
 
-        getParent().revalidate();
-        getParent().repaint();
+        setBounds(x, y, nextW, h);
+        revalidate();
+        repaint();
     }
 }

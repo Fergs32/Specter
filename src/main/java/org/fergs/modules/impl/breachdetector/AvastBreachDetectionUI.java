@@ -1,7 +1,7 @@
 package org.fergs.modules.impl.breachdetector;
 
+import org.fergs.Specter;
 import org.fergs.modules.AbstractModule;
-import org.fergs.scheduler.SpecterScheduler;
 import org.fergs.ui.notifications.ToastNotification;
 import org.fergs.utils.JHelper;
 import javax.swing.*;
@@ -9,13 +9,12 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class AvastBreachDetectionUI extends AbstractModule {
     private JPanel ui;
 
     public AvastBreachDetectionUI() {
-        super("email-breach-detection", "Check email against Avast breaches");
+        super("breach-detection", "Check email against Avast breaches");
         buildUI();
     }
 
@@ -37,7 +36,7 @@ public class AvastBreachDetectionUI extends AbstractModule {
         top.add(emailField);
 
 
-        JButton runButton = JHelper.createFancyHoverButton("Run", 14);
+        JButton runButton = JHelper.createFancyHoverButton("Run", 14, true);
         top.add(runButton);
 
         top.add(Box.createHorizontalStrut(20));
@@ -46,10 +45,10 @@ public class AvastBreachDetectionUI extends AbstractModule {
         proxyLabel.setFont(new Font("Consolas", Font.PLAIN, 14));
         top.add(proxyLabel);
 
-        JToggleButton none  = new JToggleButton("None");
-        JToggleButton http  = new JToggleButton("HTTP");
-        JToggleButton socks4= new JToggleButton("SOCKS4");
-        JToggleButton socks5= new JToggleButton("SOCKS5");
+        JToggleButton none = new JToggleButton("None");
+        JToggleButton http = new JToggleButton("HTTP");
+        JToggleButton socks4 = new JToggleButton("SOCKS4");
+        JToggleButton socks5 = new JToggleButton("SOCKS5");
 
         Color normalBg  = new Color(0x141414);
         Color neon  = new Color(0x39FF14);
@@ -62,7 +61,7 @@ public class AvastBreachDetectionUI extends AbstractModule {
 
         ButtonGroup bg = new ButtonGroup();
         for (JToggleButton tmpl : List.of(none, http, socks4, socks5)) {
-            JButton fancy = JHelper.createFancyHoverButton(tmpl.getText(), 11);
+            JButton fancy = JHelper.createFancyHoverButton(tmpl.getText(), 11, false);
 
             JToggleButton toggle = new JToggleButton(tmpl.getText());
             toggle.setModel(tmpl.getModel());
@@ -121,7 +120,7 @@ public class AvastBreachDetectionUI extends AbstractModule {
                 @Override
                 protected java.util.List<String> doInBackground() {
                     AvastBreachDetectorImpl impl =
-                            new AvastBreachDetectorImpl(proxyType, emailField.getText(), resultsArea);
+                            new AvastBreachDetectorImpl(Specter.getInstance().getConfigurationManager().loadLinesFromClasspath("proxies.txt"), proxyType, emailField.getText(), resultsArea);
                     impl.run();
                     return java.util.List.of("Test Breach 1", "Test Breach 2", "Test Breach 3");
                 }
@@ -129,9 +128,9 @@ public class AvastBreachDetectionUI extends AbstractModule {
                 protected void done() {
                     try {
                         java.util.List<String> breaches = get();
-                        resultsArea.setText(String.join("\n", breaches));
+                        //resultsArea.setText(String.join("\n", breaches));
                     } catch (Exception ex) {
-                        resultsArea.setText("Error: " + ex.getMessage());
+                        //resultsArea.setText("Error: " + ex.getMessage());
                     }
                 }
             }.execute();

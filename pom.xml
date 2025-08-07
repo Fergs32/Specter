@@ -40,6 +40,12 @@
                         </goals>
                         <configuration>
                             <mainClass>org.fergs.Specter</mainClass>
+                            <arguments>
+                                <argument>--module-path</argument>
+                                <argument>${java.home}/lib</argument>
+                                <argument>--add-modules</argument>
+                                <argument>javafx.controls,javafx.swing</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -74,6 +80,55 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.19.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.vlsi.mxgraph</groupId>
+            <artifactId>jgraphx</artifactId>
+            <version>4.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>17.0.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.21.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.34.0</version>
+        </dependency>
+        <!-- WebDriverManager to auto‐download chromedriver -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>6.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>21.0.1</version>
+            <classifier>win</classifier>
+        </dependency>
+        <!-- Core JavaFX controls (for SubScene, Sphere, etc.) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>21.0.1</version>
+            <classifier>win</classifier>
         </dependency>
     </dependencies>
 </project>

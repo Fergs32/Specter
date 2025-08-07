@@ -4,10 +4,13 @@ import org.fergs.Specter;
 import org.fergs.managers.ModuleManager;
 import org.fergs.modules.AbstractModule;
 import org.fergs.modules.impl.breachdetector.AvastBreachDetectionUI;
+import org.fergs.modules.impl.dating.DateSearchEngineUI;
+import org.fergs.modules.impl.finders.DatabaseFinderUI;
 import org.fergs.scheduler.SpecterScheduler;
 import org.fergs.ui.AbstractForm;
 import org.fergs.ui.panels.InitializationParticlePanel;
 import org.fergs.ui.panels.SlidingPanel;
+import org.fergs.utils.AudioPlayer;
 import org.fergs.utils.JHelper;
 
 import javax.swing.*;
@@ -17,8 +20,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * SpecterForm is the main UI form for the Specter application.
+ * It provides a draggable window with a header, footer, and a content area
+ * where modules can be displayed and interacted with.
+ */
 public class SpecterForm extends AbstractForm {
     private Point dragOffset;
+
+    public static JFrame frame;
 
     static {
         UIManager.put("Label.foreground", new Color(0x66FFCC));
@@ -52,27 +62,63 @@ public class SpecterForm extends AbstractForm {
         sp.setLayout(new BorderLayout());
         return sp;
     }
+
     @Override
     protected void initForm() {
         getRootPane().setBorder(BorderFactory.createEmptyBorder());
 
+        frame = this;
+
         final JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        top.setBorder(new EmptyBorder(10, 5, 0, 5));
+        top.setBorder(new EmptyBorder(10, 15, 0, 5));
+
+        Dimension btnSize = new Dimension(40, 40);
+
+        JButton leftIconButton = JHelper.createImageButton(
+                "/Specter-Logo.png",
+                46,
+                "https://github.com/your-repo"
+        );
+        leftIconButton.setPreferredSize(btnSize);
+        leftIconButton.setMinimumSize(btnSize);
+        leftIconButton.setMaximumSize(btnSize);
+        top.add(leftIconButton, BorderLayout.WEST);
 
         JPanel windowButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         windowButtons.setOpaque(false);
 
-        Dimension btnSize = new Dimension(40, 40);
+        JLabel volIcon = new JLabel("🔊");
+        JSlider volSlider = JHelper.createFancySlider(0, 100, 60);
+        volSlider.setPreferredSize(new Dimension(100, 16));
+        volSlider.setOpaque(false);
+        volSlider.addChangeListener(e ->
+                Specter.getInstance().getAudioPlayer().setVolume(volSlider.getValue() / 100f)
+        );
 
-        JButton minimize = JHelper.createHoverButton("_", 20);
+
+        windowButtons.add(volIcon);
+        windowButtons.add(volSlider);
+
+        Specter.getInstance().getAudioPlayer().playLoop("/audio/ambience-free.wav");
+        Specter.getInstance().getAudioPlayer().setVolume(volSlider.getValue() / 100f);
+
+        volIcon.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 20));
+        volIcon.setForeground(new Color(0x66FFCC));
+
+        JButton minimize = JHelper.createHoverButton("_", 20, false);
         minimize.setPreferredSize(btnSize);
         minimize.addActionListener(e -> setExtendedState(JFrame.ICONIFIED));
         windowButtons.add(minimize);
 
-        JButton exit = JHelper.createHoverButton("X", 20);
+        JButton exit = JHelper.createHoverButton("X", 20, false);
         exit.setPreferredSize(btnSize);
-        exit.addActionListener(e -> System.exit(0));
+        exit.addActionListener(e -> {
+            SpecterScheduler.shutdown();
+            Specter.getInstance().getAudioPlayer().stop();
+            System.exit(0);
+        });
+
         windowButtons.add(exit);
 
         top.add(windowButtons, BorderLayout.EAST);
@@ -101,13 +147,30 @@ public class SpecterForm extends AbstractForm {
         final JPanel bot = new JPanel(new BorderLayout());
         bot.setOpaque(false);
         bot.setBorder(new EmptyBorder(0, 10, 10, 10));
+
+
         JLabel copy = new JLabel("© 2025 Specter Development");
         copy.setFont(new Font("Consolas", Font.PLAIN, 12));
         copy.setForeground(new Color(0x888888));
         bot.add(copy, BorderLayout.WEST);
+
+        JButton clearBtn = JHelper.createFancyHoverButton("Clear", 14, false);
+        clearBtn.addActionListener(e -> {
+            JPanel contentRegion = getContentRegion();
+            contentRegion.removeAll();
+            contentRegion.revalidate();
+            contentRegion.repaint();
+        });
+        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        centerWrapper.setOpaque(false);
+        centerWrapper.add(clearBtn);
+        bot.add(centerWrapper, BorderLayout.CENTER);
+
         getContentPane().add(bot, BorderLayout.SOUTH);
 
         Specter.getInstance().getModuleManager().registerModule(new AvastBreachDetectionUI());
+        Specter.getInstance().getModuleManager().registerModule(new DatabaseFinderUI());
+        Specter.getInstance().getModuleManager().registerModule(new DateSearchEngineUI());
 
         SlidingPanel modulesPanel = new SlidingPanel(50, 220, 10, 10, (getHeight() - 50));
         modulesPanel.setRailBackground(new Color(0x2A2A2A));
@@ -147,12 +210,18 @@ public class SpecterForm extends AbstractForm {
             modulesPanel.addEmptyLabel("No modules enabled.");
         }
 
-        modulesPanel.setBounds(10, 10,
-                modulesPanel.getPreferredSize().width,
-                getHeight() - 50);
-        getRootPane().getLayeredPane()
-                .add(modulesPanel, JLayeredPane.PALETTE_LAYER);
+        SwingUtilities.invokeLater(() -> {
+            JPanel cp = (JPanel) getContentPane();
+
+            int railY = cp.getComponent(0).getHeight() + 65;
+            int railW = modulesPanel.getPreferredSize().width;
+            int railH = getHeight() - railY - cp.getComponent(2).getHeight() - 65;
+
+            modulesPanel.setBounds(10, railY, railW, railH);
+            getRootPane().getLayeredPane().add(modulesPanel, JLayeredPane.PALETTE_LAYER);
+        });
     }
+
 
     private JPanel getContentRegion() {
         Container cp = getContentPane();

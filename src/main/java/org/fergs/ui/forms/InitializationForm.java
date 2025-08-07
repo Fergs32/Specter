@@ -1,13 +1,21 @@
 package org.fergs.ui.forms;
 
+import javafx.animation.RotateTransition;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Point3D;
+import javafx.scene.*;
+import javafx.scene.shape.Sphere;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.fergs.Specter;
+import org.fergs.configuration.YamlConfigFile;
 import org.fergs.managers.ConfigurationManager;
-import org.fergs.managers.ModuleManager;
 import org.fergs.ui.AbstractForm;
 import org.fergs.ui.labels.FadingLabel;
 import org.fergs.ui.panels.InitializationParticlePanel;
+import org.fergs.ui.panels.SpherePanel;
 import org.fergs.utils.JHelper;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -29,7 +37,7 @@ public class InitializationForm extends AbstractForm {
     private FadingLabel copyLabel;
     private JLabel progressLabel;
     private FadingLabel promptLabel;
-    private List<String> enabledModules;
+    private SpherePanel globe;
 
     static {
         UIManager.put("Label.foreground", new Color(0x66FFCC));
@@ -65,6 +73,8 @@ public class InitializationForm extends AbstractForm {
                                             fadeInComponent(titleLabel, 30, 20, () ->
                                                     fadeInComponent(motoLabel, 30, 20, () ->
                                                             fadeInComponent(copyLabel, 30, 20, () -> {
+                                                                globe.start();
+                                                                globe.setVisible(true);
                                                                 progressLabel.setVisible(true);
                                                                 startLoading();
                                                             })
@@ -91,7 +101,7 @@ public class InitializationForm extends AbstractForm {
         top.setOpaque(false);
         top.setBorder(new EmptyBorder(10, 10, 0, 10));
 
-        JButton exit = JHelper.createHoverButton("X", 30);
+        JButton exit = JHelper.createHoverButton("X", 30, false);
         exit.addActionListener(e -> System.exit(0));
         top.add(exit, BorderLayout.EAST);
 
@@ -118,12 +128,19 @@ public class InitializationForm extends AbstractForm {
         copyLabel = new FadingLabel("© 2025 Specter Development", new Font("Consolas", Font.PLAIN, 12), new Color(0x888888));
         bot.add(copyLabel, BorderLayout.WEST);
 
-        progressLabel = new JLabel("Loading modules...");
+        progressLabel = new JLabel("");
         progressLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
         progressLabel.setForeground(new Color(0x66FFCC));
         progressLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
-        progressLabel.setVisible(false);                // hide until footer has faded in
+        progressLabel.setVisible(false);
         bot.add(progressLabel, BorderLayout.EAST);
+
+        globe = new SpherePanel(100);
+        globe.setOpaque(false);
+        globe.setVisible(false);
+        globe.setBounds((500-300)/2,(300-300)/2,500,500);
+
+        getContentPane().add(globe, BorderLayout.WEST);
 
         getContentPane().add(bot, BorderLayout.SOUTH);
     }
@@ -132,17 +149,20 @@ public class InitializationForm extends AbstractForm {
         new SwingWorker<Void, String>() {
             @Override
             protected Void doInBackground() {
-                Specter.getInstance().getConfigurationManager()
-                        .loadFromClasspath("modules.yml");
-                enabledModules = Specter.getInstance()
-                        .getConfigurationManager()
-                        .getStringList("enabled-modules");
+                try {
+                    ConfigurationManager cfgm = Specter.getInstance().getConfigurationManager();
 
-                for (String moduleName : enabledModules) {
-                    publish("Loading " + moduleName + "...");
+                    publish("Loading configuration(s)...");
+                    cfgm.loadFromClasspath("modules", "modules.yml");
+                    Thread.sleep(1000);
+                    return null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    publish("Error during initialization: " + e.getMessage());
+                    return null;
                 }
-                return null;
             }
+
 
             @Override
             protected void process(List<String> chunks) {

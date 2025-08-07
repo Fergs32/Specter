@@ -36,9 +36,9 @@ public final class InitializationParticlePanel extends JPanel implements ActionL
     }
 
     private void initFlakes() {
-        int w = getWidth(), h = getHeight();
+        final int w = getWidth(), h = getHeight();
         for (int i = 0; i < 10; i++) {
-            int size = 6 + rand.nextInt(6);
+            final int size = 6 + rand.nextInt(6);
             flakes.add(new Flake(rand.nextInt(w), rand.nextInt(h), size));
         }
     }
@@ -59,20 +59,20 @@ public final class InitializationParticlePanel extends JPanel implements ActionL
     }
 
     private void drawSnowflake(Graphics2D g2, int r) {
-        int arms = 6;
-        double angleStep = Math.PI * 2 / arms;
+        final int arms = 6;
+        final double angleStep = Math.PI * 2 / arms;
         for (int i = 0; i < arms; i++) {
-            double angle = i * angleStep;
-            int x2 = (int) (Math.cos(angle) * r);
-            int y2 = (int) (Math.sin(angle) * r);
+            final double angle = i * angleStep;
+            final int x2 = (int) (Math.cos(angle) * r);
+            final int y2 = (int) (Math.sin(angle) * r);
             g2.drawLine(0, 0, x2, y2);
 
-            double branchBase = r * 0.6;
-            int bx = (int) (Math.cos(angle) * branchBase);
-            int by = (int) (Math.sin(angle) * branchBase);
-            double ba1 = angle + angleStep * 0.2;
-            double ba2 = angle - angleStep * 0.2;
-            int br = (int) (r * 0.3);
+            final double branchBase = r * 0.6;
+            final int bx = (int) (Math.cos(angle) * branchBase);
+            final int by = (int) (Math.sin(angle) * branchBase);
+            final double ba1 = angle + angleStep * 0.2;
+            final double ba2 = angle - angleStep * 0.2;
+            final int br = (int) (r * 0.3);
             g2.drawLine(bx, by,
                     bx + (int) (Math.cos(ba1) * br),
                     by + (int) (Math.sin(ba1) * br));
@@ -84,8 +84,8 @@ public final class InitializationParticlePanel extends JPanel implements ActionL
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int w = getWidth(), h = getHeight();
-        for (Flake f : flakes) {
+        final int w = getWidth(), h = getHeight();
+        for (final Flake f : flakes) {
             f.y += f.speed;
             f.x += (int) (Math.sin(f.phase) * f.drift);
             f.angle += f.rotationSpeed;
