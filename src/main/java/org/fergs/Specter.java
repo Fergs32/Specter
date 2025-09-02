@@ -9,6 +9,11 @@ import org.fergs.utils.AudioPlayer;
 
 import javax.swing.*;
 
+/**
+ * Specter is the main singleton class for the application.
+ * It holds references to the ConfigurationManager, ModuleManager, and AudioPlayer.
+ * It also defines the application version.
+ */
 @Getter @Setter
 public class Specter {
     private static Specter instance;

@@ -19,10 +19,15 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
-public class DateSearchEngineUI extends AbstractModule {
+/**
+ * DateSearchEngineUI provides a user interface for searching dating profiles based on a given name.
+ * It allows users to input a name, select a proxy type, and view the results of the search.
+ *
+ * @Author Fergs32
+ */
+public final class DateSearchEngineUI extends AbstractModule {
     private final JPanel ui;
     private final JPanel resultsPanel;
-    private final JScrollPane scrollPane;
 
     public DateSearchEngineUI() {
         super("dating-engine", "Find dating profiles for information gathering");
@@ -105,7 +110,7 @@ public class DateSearchEngineUI extends AbstractModule {
         resultsPanel = new JPanel();
         resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
         resultsPanel.setBackground(new Color(0x1E1E1E));
-        scrollPane = new CyberScrollPane(resultsPanel);
+        JScrollPane scrollPane = new CyberScrollPane(resultsPanel);
         ui.add(scrollPane, BorderLayout.CENTER);
 
         runButton.addActionListener(e -> {

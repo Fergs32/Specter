@@ -70,11 +70,11 @@ public class InitializationForm extends AbstractForm {
                         holdAndFadeOutPrompt(2000, 30, 20, promptLabel,  () ->
                                 fadeInPrompt("Let me get things set up for you.", 30, 20, promptLabel, () ->
                                         holdAndFadeOutPrompt(2000, 30, 20, promptLabel, () -> {
-                                            fadeInComponent(titleLabel, 30, 20, () ->
-                                                    fadeInComponent(motoLabel, 30, 20, () ->
+                                            globe.start();
+                                            globe.setVisible(true);
+                                            fadeInComponent(titleLabel, 50, 20, () ->
+                                                    fadeInComponent(motoLabel, 70, 20, () ->
                                                             fadeInComponent(copyLabel, 30, 20, () -> {
-                                                                globe.start();
-                                                                globe.setVisible(true);
                                                                 progressLabel.setVisible(true);
                                                                 startLoading();
                                                             })

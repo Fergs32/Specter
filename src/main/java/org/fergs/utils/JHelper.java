@@ -18,7 +18,28 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 
-public class JHelper {
+/**
+ * JHelper provides static utility methods to create and style Swing components
+ * with custom appearances and behaviors, such as hover effects, rounded borders,
+ * fading animations, and more.
+ * <p>
+ * Example usage(s):
+ * <pre>
+ * JButton hoverBtn = JHelper.createHoverButton("Click Me", 16, true);
+ * JButton imgBtn = JHelper.createImageButton("/icon.png", 32, "https://example.com");
+ * JSlider fancySlider = JHelper.createFancySlider(0, 100, 50);
+ * </pre>
+ * <p>
+ * Note: Some methods require additional classes like FadingLabel and RoundedBorder
+ * from the org.fergs.ui package.
+ * </p>
+ * @see JButton
+ * @see JSlider
+ * @see FadingLabel
+ * @see RoundedBorder
+ * @author Fergs32
+ */
+public final class JHelper {
     /**
      * Helper to create a flat button with hover effect:
      * - Slight background tint

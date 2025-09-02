@@ -1,6 +1,5 @@
 package org.fergs.modules.impl.dating;
 
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.fergs.objects.SearchResult;
 import org.openqa.selenium.*;
@@ -19,8 +18,17 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-//https://cse.google.com/cse?cx=c7b340447e1e12653&q={query}
-public class DateSearchEngineImpl {
+/**
+ * DateSearchEngineImpl is a class that performs web searches using Google Custom Search Engine (CSE)
+ * to find dating-related results for a specified target name. It supports proxy usage and headless
+ * browser operation using Selenium WebDriver with Chrome.
+ * <p>
+ * Leverages a custom Google CSE configured for dating searches.
+ * <p>
+ *
+ * @Author Fergs32
+ */
+public final class DateSearchEngineImpl {
     private final List<String> proxies;
     private final String proxyType;
     private final String targetName;

@@ -13,6 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * A JPanel that displays animated snowflake particles, suitable for initialization screens.
+ * The panel creates and animates snowflakes that fall and drift across the panel.
+ * <p>
+ * Usage:
+ * <pre>
+ * InitializationParticlePanel particlePanel = new InitializationParticlePanel();
+ * // Add particlePanel to your frame or another container
+ * </pre>
+ *
+ * Note: Ensure the panel is properly sized to see the effect.
+ *
+ * @author Fergs32
+ */
 public final class InitializationParticlePanel extends JPanel implements ActionListener {
     private final List<Flake> flakes = new ArrayList<>();
     private final Random rand = new Random();

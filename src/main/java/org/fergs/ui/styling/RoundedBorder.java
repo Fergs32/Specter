@@ -1,9 +1,24 @@
 package org.fergs.ui.styling;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public  class RoundedBorder implements Border {
+/**
+ * A simple rounded border implementation for Swing components.
+ * <p>
+ * Usage example:
+ * <pre>
+ * JButton button = new JButton("Click Me");
+ * button.setBorder(new RoundedBorder(10, Color.BLUE));
+ * </pre>
+ * Note: The component should have opaque set to false to see the rounded corners properly.
+ * @see Border
+ * @see JButton
+ *
+ * @author Fergs32
+ */
+public final class RoundedBorder implements Border {
 
     private final int radius;
     private final Color color;

@@ -1,10 +1,36 @@
 package org.fergs.ui;
 
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Abstract base class for creating custom forms in the Specter application.
+ * This class sets up a standard JFrame with header, content, and footer regions,
+ * as well as a menu bar. Subclasses should implement the initForm method to
+ * initialize their specific components.
+ *
+ * Example usage:
+ * <pre>
+ * public class MyForm extends AbstractForm {
+ *     public MyForm() {
+ *         super("My Form", 800, 600);
+ *     }
+ *
+ *     @Override
+ *     public void initForm() {
+ *         // Initialize form components here
+ *     }
+ * }
+ * </pre>
+ * </p>
+ *
+ * @Author Fergs32
+ */
 public abstract class AbstractForm extends JFrame {
     private final JPanel header = createRegion(new BorderLayout());
     private final JPanel content = createRegion(new BorderLayout());

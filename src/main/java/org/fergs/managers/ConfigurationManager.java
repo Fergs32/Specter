@@ -19,23 +19,38 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * ConfigurationManager loads one or more YAML files into an in‑memory map,
- * supports reloading, and provides typed getters.
- */
-/**
- * Manages multiple named YamlConfigFile instances.
- */
-public class ConfigurationManager {
-    private final Map<String, YamlConfigFile> files = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    /** Load a classpath YAML into the registry under this name. */
+/**
+ * ConfigurationManager handles loading and accessing YAML configuration files.
+ * It supports loading from classpath resources and provides access to loaded configurations.
+ * Configurations are stored in a thread-safe map and can be retrieved by name.
+ * <p>
+ * Example usage:
+ * <pre>
+ * ConfigurationManager configManager = new ConfigurationManager();
+ * configManager.loadFromClasspath("appConfig", "config/app.yaml");
+ * YamlConfigFile appConfig = configManager.getConfig("appConfig");
+ * </pre>
+ * </p>
+ * @Author Fergs32
+ */
+@Getter @Setter
+public final class ConfigurationManager {
+    private final Map<String, YamlConfigFile> files = Collections.synchronizedMap(new LinkedHashMap<>());
+    /**
+     * Load a classpath YAML into the registry under this name.
+     * @param name the name to register this config under.
+     * @param resourcePath the classpath resource path to load the YAML from.
+     */
     public void loadFromClasspath(String name, String resourcePath) {
         YamlConfigFile file = YamlConfigFile.loadFromClasspath(resourcePath);
         files.put(name, file);
     }
-
-    /** Load a filesystem YAML into the registry under this name. */
+    /**
+     * Load lines from a classpath resource, trimming whitespace and ignoring empty lines.
+     * @param resourcePath the classpath resource path to load lines from.
+     * @return a list of non-empty, trimmed lines.
+     */
     public List<String> loadLinesFromClasspath(String resourcePath) {
         InputStream in = Thread.currentThread()
                 .getContextClassLoader()
@@ -50,13 +65,18 @@ public class ConfigurationManager {
             throw new RuntimeException("Failed to read lines: " + resourcePath, e);
         }
     }
-
-    /** Retrieve the named config file, or null if not loaded. */
+    /**
+     * Get a loaded config by name.
+     * @param name the name the config was registered under.
+     * @return the YamlConfigFile, or null if not found.
+     */
     public YamlConfigFile getConfig(String name) {
         return files.get(name);
     }
-
-    /** Read-only view of all loaded configs */
+    /**
+     * List all loaded configs.
+     * @return an unmodifiable map of config names to YamlConfigFile instances.
+     */
     public Map<String, YamlConfigFile> listConfigs() {
         return Collections.unmodifiableMap(files);
     }

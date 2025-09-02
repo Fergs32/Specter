@@ -7,6 +7,25 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * A simple audio player for playing background music and sound effects.
+ * Supports looping background tracks and one-shot sound effects.
+ * Uses Java's built-in javax.sound.sampled library.
+ *
+ * Example usage:
+ * <pre>
+ * AudioPlayer audioPlayer = new AudioPlayer();
+ * audioPlayer.playLoop("/audio/ambience.wav"); // Start looping background music
+ * audioPlayer.setVolume(0.5f); // Set volume to 50%
+ * audioPlayer.playHoverSound(); // Play hover sound effect
+ * </pre>
+ * Note: Audio files must be in WAV format and accessible as resources.
+ * @see Clip
+ * @see AudioInputStream
+ * @see FloatControl
+ *
+ * @author Fergs32
+ */
 @Getter @Setter
 public class AudioPlayer {
     public Clip clip;
@@ -102,7 +121,6 @@ public class AudioPlayer {
             gainControl = null;
         }
     }
-
     /**
      * @param volume linear [0.0f → 1.0f]
      */

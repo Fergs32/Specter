@@ -5,7 +5,16 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 
 /**
- * A JScrollPane with cyber-themed scroll bars.
+ * A JScrollPane with a cyberpunk-themed scrollbar.
+ * Colors: Dark background with bright cyan thumb.
+ * Customizable via the CyberScrollBarUI inner class.
+ * <p>
+ * Example usage:
+ * <pre>
+ * CyberScrollPane scrollPane = new CyberScrollPane(myComponent);
+ * </pre>
+ * </p>
+ * @Author Fergs32
  */
 public class CyberScrollPane extends JScrollPane {
     public CyberScrollPane(Component content) {

@@ -8,6 +8,24 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * A sliding side panel that expands on hover to show module buttons.
+ * The panel starts as a narrow rail with a hamburger icon, and expands
+ * to a wider panel displaying enabled modules when hovered over.
+ * It collapses back to the rail when the mouse moves away.
+ * <p>
+ * Example usage:
+ * <pre>
+ * SlidingPanel panel = new SlidingPanel(50, 200, 10, 100, 400);
+ * panel.addModuleLabel("Enabled Modules");
+ * panel.addModuleButton("Module 1", 14, e -> System.out.println("Module 1 clicked"));
+ * panel.addModuleButton("Module 2", 14, e -> System.out.println("Module 2 clicked"));
+ * </pre>
+ * </p>
+ * Note: Ensure the panel is added to a container with enough space to expand.
+ * @see JPanel
+ * @author Fergs32
+ */
 @Getter @Setter
 public final class SlidingPanel extends JPanel {
     private final Box inner;

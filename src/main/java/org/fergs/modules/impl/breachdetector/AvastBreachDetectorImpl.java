@@ -17,7 +17,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AvastBreachDetectorImpl {
+/**
+ * AvastBreachDetectorImpl is a class that checks for data breaches associated with a given email address
+ * using the Avast Identity Protection API. It supports proxy usage and displays results in the UI.
+ */
+public final class AvastBreachDetectorImpl {
     private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final List<String> proxies;
     private final String proxyType;
@@ -132,14 +136,14 @@ public class AvastBreachDetectorImpl {
                                     .setDuration(3500)
                                     .setTitle("☠︎ Breach Detected")
                                     .setMessage(
-                                            "Website: " + breach.getSite() +
-                                                    "\nDate: "    + breach.getPublishDate() +
-                                                    "\nRecords: " + breach.getRecordsCount()
+                                            "Website: " + breach.site() +
+                                                    "\nDate: "    + breach.publishDate() +
+                                                    "\nRecords: " + breach.recordsCount()
                                     )
                                     .show(), 300L * count.getAndIncrement(), TimeUnit.MILLISECONDS);
 
                             jTextArea.append("[LOG] Breach found: "
-                                    + breach.getSite() + " on " + breach.getPublishDate() + "\n");
+                                    + breach.site() + " on " + breach.publishDate() + "\n");
                         }
                     }
 

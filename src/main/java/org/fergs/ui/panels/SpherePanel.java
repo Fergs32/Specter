@@ -1,13 +1,28 @@
 package org.fergs.ui.panels;
 
-import io.opentelemetry.sdk.metrics.data.PointData;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Random;
 
+
+/**
+ * A JPanel that displays a rotating 3D sphere with land points, simulating a planet.
+ * The sphere rotates continuously, and the land points are rendered with perspective
+ * to create a 3D effect.
+ * <p>
+ * Usage:
+ * <pre>
+ * SpherePanel spherePanel = new SpherePanel(numPoints);
+ * // Add spherePanel to your frame or another container
+ * spherePanel.start(); // To start the rotation
+ * </pre>
+ * <p>
+ * Note: Ensure the panel is properly sized to see the effect.
+ *
+ * @author Fergs32
+ */
 public class SpherePanel extends JPanel {
 
     private final java.util.List<Vec3> landPoints = new ArrayList<>();
@@ -63,7 +78,7 @@ public class SpherePanel extends JPanel {
 
         g.setColor(new Color(100, 100, 100, 80));
         g.setStroke(new BasicStroke(1.2f));
-        g.drawOval((int) (w / 2 - projRadius), (int) (h / 2 - projRadius),
+        g.drawOval((int) ((double) w / 2 - projRadius), (int) ((double) h / 2 - projRadius),
                 (int) (2 * projRadius), (int) (2 * projRadius));
 
         final java.util.List<PointData> pointData = new ArrayList<>();
@@ -83,8 +98,8 @@ public class SpherePanel extends JPanel {
             if (zz < 0) continue;
 
             double scale = focal / (focal + zz);
-            int sx = (int) (zx * scale + w / 2);
-            int sy = (int) (zy * scale + h / 2);
+            int sx = (int) (zx * scale + (double) w / 2);
+            int sy = (int) (zy * scale + (double) h / 2);
 
             pointData.add(new PointData(sx, sy, scale, zz));
         }

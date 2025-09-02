@@ -31,14 +31,13 @@ public class SpecterScheduler {
      * This future can be used to cancel the task if needed, but it will run anyway
      * if not cancelled before the delay expires.
      *
-     * @param task the task to run, wrapped in a try/catch to handle exceptions.
+     * @param task  the task to run, wrapped in a try/catch to handle exceptions.
      * @param delay the delay before running the task, in the specified time unit.
-     * @param unit the time unit for the delay (e.g., TimeUnit.SECONDS).
-     * @return a ScheduledFuture that can be used to cancel the task if needed.
+     * @param unit  the time unit for the delay (e.g., TimeUnit.SECONDS).
      */
     @SuppressWarnings("unused")
-    public static ScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
-        return executor.schedule(wrap(task), delay, unit);
+    public static void schedule(Runnable task, long delay, TimeUnit unit) {
+        executor.schedule(wrap(task), delay, unit);
     }
     /**
      * Schedules a repeating task with fixed rate, where the next execution starts

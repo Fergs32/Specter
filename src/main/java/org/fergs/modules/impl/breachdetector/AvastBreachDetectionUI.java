@@ -10,7 +10,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 
-public class AvastBreachDetectionUI extends AbstractModule {
+/**
+ * AvastBreachDetectionUI provides a user interface for checking email addresses against known data breaches
+ * using the Avast breach detection service. It allows users to input an email address, select a proxy type,
+ * and view the results of the breach check.
+ *
+ * @Author Fergs32
+ */
+public final class AvastBreachDetectionUI extends AbstractModule {
     private JPanel ui;
 
     public AvastBreachDetectionUI() {

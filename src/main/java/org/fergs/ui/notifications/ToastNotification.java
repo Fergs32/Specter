@@ -11,8 +11,29 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
+/**
+ * A simple toast notification for Swing applications.
+ * Usage example:
+ * <pre>
+ * ToastNotification.builder(frame)
+ *     .setTitle("Info")
+ *     .setMessage("This is a toast notification.")
+ *     .setBackground(new Color(0x333333))
+ *     .setTitleColor(Color.WHITE)
+ *     .setMessageColor(Color.LIGHT_GRAY)
+ *     .setTitleFont(new Font("Arial", Font.BOLD, 16))
+ *     .setMessageFont(new Font("Arial", Font.PLAIN, 14))
+ *     .setSize(300, 80)
+ *     .setFadeInStep(50)
+ *     .setFadeOutStep(50)
+ *     .setDuration(3000)
+ *     .show();
+ * </pre>
+ *
+ * Note: Requires Java 6 or higher for window opacity support.
+ *
+ * @author Fergs32
+ */
 @Getter @Setter
 public final class ToastNotification {
     private static final List<JWindow> toasts = new ArrayList<>();

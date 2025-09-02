@@ -1,6 +1,5 @@
 package org.fergs.ui.forms;
 
-import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
@@ -10,7 +9,6 @@ import org.fergs.utils.JHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -118,7 +116,7 @@ public class BreachGraphForm extends AbstractForm {
                 int y = cy + (int)(INNER_RADIUS * Math.sin(theta)) - NODE_HEIGHT/2;
                 String label = String.format(
                         "<html><b>%s</b><br/>%s</html>",
-                        b.getSite(), b.getPublishDate()
+                        b.site(), b.publishDate()
                 );
                 breachCells[i] = (mxCell)graph.insertVertex(parent, null,
                         label, x, y, NODE_WIDTH, NODE_HEIGHT, baseStyle);
@@ -134,7 +132,7 @@ public class BreachGraphForm extends AbstractForm {
                 int dy = cy + (int)(OUTER_RADIUS * Math.sin(theta)) - DESC_HEIGHT/2;
                 String descHtml = String.format(
                         "<html><b>Description:</b><br/>%s</html>",
-                        b.getDescription()
+                        b.description()
                                 .replace("&","&amp;")
                                 .replace("<","&lt;")
                                 .replace(">","&gt;")

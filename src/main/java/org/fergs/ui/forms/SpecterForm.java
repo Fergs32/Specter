@@ -221,8 +221,11 @@ public class SpecterForm extends AbstractForm {
             getRootPane().getLayeredPane().add(modulesPanel, JLayeredPane.PALETTE_LAYER);
         });
     }
-
-
+    /**
+     * Retrieves the main content region panel where module UIs are displayed.
+     * If no specific center panel is found, it defaults to the content pane itself.
+     * @return The JPanel representing the content region.
+     */
     private JPanel getContentRegion() {
         Container cp = getContentPane();
         for (Component c : cp.getComponents()) {
