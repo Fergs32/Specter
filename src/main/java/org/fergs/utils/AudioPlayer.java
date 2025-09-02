@@ -11,7 +11,7 @@ import java.net.URL;
  * A simple audio player for playing background music and sound effects.
  * Supports looping background tracks and one-shot sound effects.
  * Uses Java's built-in javax.sound.sampled library.
- *
+ * <p>
  * Example usage:
  * <pre>
  * AudioPlayer audioPlayer = new AudioPlayer();

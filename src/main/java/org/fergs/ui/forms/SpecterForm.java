@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
  * SpecterForm is the main UI form for the Specter application.
  * It provides a draggable window with a header, footer, and a content area
  * where modules can be displayed and interacted with.
+ *
+ * @Author Fergs32
  */
 public class SpecterForm extends AbstractForm {
     private Point dragOffset;

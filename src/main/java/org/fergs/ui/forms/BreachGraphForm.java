@@ -14,6 +14,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 
+/**
+ * BreachGraphForm displays a graphical representation of data breaches
+ * associated with a specific email address. It uses the JGraphX library
+ * to create an interactive graph where the email is at the center, breaches
+ * are arranged in an inner ring, and descriptions are in an outer ring.
+ *
+ * @Author Fergs32
+ */
 public class BreachGraphForm extends AbstractForm {
     private final String email;
     private final List<Breach> breaches;
@@ -22,7 +30,7 @@ public class BreachGraphForm extends AbstractForm {
     private static final int NODE_WIDTH     = 140;
     private static final int NODE_HEIGHT    = 60;
     private static final int INNER_RADIUS   = 180;
-    // outer circle for description nodes
+
     private static final int DESC_WIDTH     = 250;
     private static final int DESC_HEIGHT    = 100;
     private static final int OUTER_RADIUS   = 450;
@@ -31,8 +39,6 @@ public class BreachGraphForm extends AbstractForm {
         super("Specter • Breach Map", 900, 700);
         this.email   = email;
         this.breaches = breaches;
-
-        // make the entire window draggable
         MouseAdapter ma = new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 dragOffset = e.getPoint();
@@ -47,24 +53,30 @@ public class BreachGraphForm extends AbstractForm {
         getContentPane().addMouseMotionListener(ma);
     }
 
+    /**
+     * Creates the main content pane with a dark background.
+     * @return the content pane JPanel
+     * @see AbstractForm#createContentPane()
+     */
     @Override
     protected JPanel createContentPane() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(new Color(0x1E1E1E));
         return p;
     }
-
+    /**
+     * Initializes the form by adding a close button and setting up the breach graph.
+     * If there are no breaches, it displays a message indicating that.
+     * @see AbstractForm#initForm()
+     */
     @Override
     protected void initForm() {
-        // close button
         JButton close = JHelper.createHoverButton("X", 20, false);
         close.setPreferredSize(new Dimension(40, 40));
         close.addActionListener(e -> dispose());
         ((JPanel)getContentPane().getComponent(0))
                 .add(close, BorderLayout.EAST);
         if (getJMenuBar()!=null) getJMenuBar().setVisible(false);
-
-        // no breaches?
         if (breaches == null || breaches.isEmpty()) {
             JLabel none = new JLabel("<html><b>No breaches for:</b><br/>" + email + "</html>",
                     SwingConstants.CENTER);
@@ -74,8 +86,6 @@ public class BreachGraphForm extends AbstractForm {
             return;
         }
 
-
-        // build graph
         mxGraph graph = new mxGraph();
         graph.setHtmlLabels(true);
         graph.setCellsResizable(false);
@@ -94,11 +104,9 @@ public class BreachGraphForm extends AbstractForm {
                             "strokeColor=#00FF88;strokeWidth=2;" +
                             "fontFamily=Consolas;fontSize=12;";
 
-            // center coordinates
             int cx = OUTER_RADIUS + DESC_WIDTH;
             int cy = OUTER_RADIUS + DESC_HEIGHT;
 
-            // center node
             mxCell emailCell = (mxCell)graph.insertVertex(parent, null,
                     "<html><b>" + email + "</b></html>",
                     cx-100, cy-25, 200, 50,
@@ -107,7 +115,6 @@ public class BreachGraphForm extends AbstractForm {
 
             int n = breaches.size();
 
-            // 1) Inner ring: breach nodes
             mxCell[] breachCells = new mxCell[n];
             for (int i = 0; i < n; i++) {
                 Breach b = breaches.get(i);
@@ -124,7 +131,6 @@ public class BreachGraphForm extends AbstractForm {
                         "strokeColor=#00FF88;strokeWidth=1.5;");
             }
 
-            // 2) Outer ring: description nodes
             for (int i = 0; i < n; i++) {
                 Breach b = breaches.get(i);
                 double theta = 2*Math.PI*i/n;
@@ -147,14 +153,12 @@ public class BreachGraphForm extends AbstractForm {
             graph.getModel().endUpdate();
         }
 
-        // wrap in interactive component
         mxGraphComponent comp = new mxGraphComponent(graph);
         comp.setConnectable(false);
         comp.setBorder(null);
         comp.getViewport().setBackground(new Color(0x1E1E1E));
         comp.setBackground(new Color(0x1E1E1E));
 
-        // panning via left‐drag
         JScrollPane scroll = new JScrollPane(comp);
         scroll.setBorder(null);
         scroll.getViewport().setBackground(new Color(0x1E1E1E));
@@ -180,16 +184,14 @@ public class BreachGraphForm extends AbstractForm {
             }
         });
 
-        // zoom with Ctrl + wheel
         comp.addMouseWheelListener(e -> {
             if (e.isControlDown()) {
                 if (e.getWheelRotation() < 0) comp.zoomIn();
-                else                           comp.zoomOut();
+                else comp.zoomOut();
                 e.consume();
             }
         });
 
-        // center on open
         int cx = OUTER_RADIUS + DESC_WIDTH;
         int cy = OUTER_RADIUS + DESC_HEIGHT;
         SwingUtilities.invokeLater(() -> {
@@ -198,8 +200,11 @@ public class BreachGraphForm extends AbstractForm {
 
         getContentRegion().add(scroll, BorderLayout.CENTER);
     }
-
-    /** helper to find the CENTER region panel */
+    /**
+     * Retrieves the main content region of the form, which is the center panel
+     * in the BorderLayout of the content pane.
+     * @return the central JPanel of the content pane
+     */
     private JPanel getContentRegion() {
         Container cp = getContentPane();
         for (Component c : cp.getComponents()) {

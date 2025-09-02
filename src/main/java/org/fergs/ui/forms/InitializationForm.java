@@ -1,15 +1,6 @@
 package org.fergs.ui.forms;
 
-import javafx.animation.RotateTransition;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.geometry.Point3D;
-import javafx.scene.*;
-import javafx.scene.shape.Sphere;
-import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.fergs.Specter;
-import org.fergs.configuration.YamlConfigFile;
 import org.fergs.managers.ConfigurationManager;
 import org.fergs.ui.AbstractForm;
 import org.fergs.ui.labels.FadingLabel;
@@ -29,6 +20,13 @@ import java.util.concurrent.ExecutionException;
 
 import static org.fergs.utils.JHelper.*;
 
+/**
+ * InitializationForm is the startup form for the Specter application.
+ * It features animated labels, a rotating globe, and a loading sequence
+ * that initializes configurations before launching the main SpecterForm.
+ *
+ * @Author Fergs32
+ */
 public class InitializationForm extends AbstractForm {
 
     private Point dragOffset;
@@ -38,14 +36,17 @@ public class InitializationForm extends AbstractForm {
     private JLabel progressLabel;
     private FadingLabel promptLabel;
     private SpherePanel globe;
-
     static {
         UIManager.put("Label.foreground", new Color(0x66FFCC));
         UIManager.put("Button.background", new Color(0x2A2A2A));
         UIManager.put("Button.foreground", new Color(0x66FFCC));
         UIManager.put("Button.border", BorderFactory.createLineBorder(new Color(0x444444), 1));
     }
-
+    /**
+     * Constructs the InitializationForm with specified dimensions and sets up
+     * mouse listeners for dragging the window. It also initiates the loading
+     * sequence when the window is opened.
+     */
     public InitializationForm() {
         super("", 500, 300);
 
@@ -87,14 +88,22 @@ public class InitializationForm extends AbstractForm {
             }
         });
     }
-
+    /**
+     * Creates the main content pane with an InitializationParticlePanel background.
+     * @return the content pane JPanel
+     * @see AbstractForm#createContentPane()
+     */
     @Override
     protected JPanel createContentPane() {
         InitializationParticlePanel sp = new InitializationParticlePanel();
         sp.setLayout(new BorderLayout());
         return sp;
     }
-
+    /**
+     * Initializes the form by setting up labels, buttons, and the rotating globe.
+     * It also configures the layout and appearance of the form's components.
+     * @see AbstractForm#initForm()
+     */
     @Override
     protected void initForm() {
         JPanel top = new JPanel(new BorderLayout());
@@ -144,7 +153,11 @@ public class InitializationForm extends AbstractForm {
 
         getContentPane().add(bot, BorderLayout.SOUTH);
     }
-
+    /**
+     * Starts the loading sequence using a SwingWorker to load configurations
+     * in the background while updating the progress label. Once loading is complete,
+     * it launches the main SpecterForm and disposes of the InitializationForm.
+     */
     private void startLoading() {
         new SwingWorker<Void, String>() {
             @Override

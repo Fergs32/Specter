@@ -11,6 +11,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A lightweight scheduler for delayed and repeating tasks.
+ * Uses a ScheduledExecutorService under the hood with a pool size
+ * equal to the number of available processors.
+ * Tasks are wrapped in a try/catch to ensure exceptions are logged
+ * and don't kill the thread.
+ * <p>
+ * Usage examples:
+ * - Schedule a one-off task after a delay:
+ *   SpecterScheduler.schedule(() -> { /* task code *\/ }, 5, TimeUnit.SECONDS);
+ * - Schedule a repeating task at fixed rate:
+ *   SpecterScheduler.scheduleAtFixedRate(() -> { /* task code *\/ }, 0, 10, TimeUnit.SECONDS);
+ * - Schedule a repeating task with fixed delay:
+ *   SpecterScheduler.scheduleWithFixedDelay(() -> { /* task code *\/ }, 0, 10, TimeUnit.SECONDS);
+ * - Schedule a task to run immediately:
+ *   SpecterScheduler.scheduleNow(() -> { /* task code *\/ });
+ * - Schedule a repeating task at fixed rate starting immediately:
+ *   SpecterScheduler.scheduleAtFixedRateNow(() -> { /* task code *\/ }, 10, TimeUnit.SECONDS);
+ * <p>
+ * Note: The scheduler runs tasks on daemon threads, so it won't prevent the JVM from exiting.
+ * Call SpecterScheduler.shutdown() to cleanly shut down the scheduler when done.
+ *
+ * @author Fergs32
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpecterScheduler {
@@ -119,7 +140,6 @@ public class SpecterScheduler {
                 }
         );
     }
-
     /**
      * Shut down the scheduler (no new tasks will be accepted).
      * Already‐scheduled tasks will still run.
@@ -127,9 +147,10 @@ public class SpecterScheduler {
     public static void shutdown() {
         executor.shutdown();
     }
-
     /**
      * Wraps your task in a try/catch to ensure exceptions get logged and don't kill the thread.
+     * @param task the original task to run
+     * @return a wrapped Runnable that catches and logs exceptions
      */
     private static Runnable wrap(Runnable task) {
         return () -> {
