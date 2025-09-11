@@ -3,6 +3,7 @@ package org.fergs;
 import lombok.Getter;
 import lombok.Setter;
 import org.fergs.managers.ConfigurationManager;
+import org.fergs.managers.LoggingManager;
 import org.fergs.managers.ModuleManager;
 import org.fergs.ui.forms.InitializationForm;
 import org.fergs.utils.AudioPlayer;
@@ -21,11 +22,13 @@ public class Specter {
     public final ModuleManager moduleManager;
     public final AudioPlayer audioPlayer;
     public final String VERSION = "v1.0.0";
+    public final LoggingManager logger;
 
     private Specter() {
         this.configurationManager = new ConfigurationManager();
         this.moduleManager = new ModuleManager();
         this.audioPlayer = new AudioPlayer();
+        this.logger = LoggingManager.getInstance();
     }
     /**
      * Returns the one and only Specter instance, creating it on first call.

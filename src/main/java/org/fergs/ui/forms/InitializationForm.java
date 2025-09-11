@@ -28,7 +28,6 @@ import static org.fergs.utils.JHelper.*;
  * @Author Fergs32
  */
 public class InitializationForm extends AbstractForm {
-
     private Point dragOffset;
     private FadingLabel titleLabel;
     private FadingLabel motoLabel;

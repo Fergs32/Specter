@@ -2,12 +2,15 @@ package org.fergs.scheduler;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.fergs.managers.LoggingManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 /**
  * A lightweight scheduler for delayed and repeating tasks.
@@ -33,10 +36,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Fergs32
  */
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpecterScheduler {
     private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors();
     private static final AtomicInteger threadCount = new AtomicInteger(0);
+    private static final LoggingManager LOGGER = LoggingManager.getInstance();
     private static ScheduledExecutorService executor =
             Executors.newScheduledThreadPool(
                     POOL_SIZE,
@@ -59,6 +64,7 @@ public class SpecterScheduler {
     @SuppressWarnings("unused")
     public static void schedule(Runnable task, long delay, TimeUnit unit) {
         executor.schedule(wrap(task), delay, unit);
+        LOGGER.log(Level.INFO, "Scheduled task {0}", task);
     }
     /**
      * Schedules a repeating task with fixed rate, where the next execution starts
@@ -74,6 +80,7 @@ public class SpecterScheduler {
     public static ScheduledFuture<?> scheduleAtFixedRate(
             Runnable task, long initialDelay, long period, TimeUnit unit
     ) {
+        LOGGER.log(Level.INFO, "Scheduled repeating task {0}", task);
         return executor.scheduleAtFixedRate(wrap(task), initialDelay, period, unit);
     }
     /**
@@ -90,6 +97,7 @@ public class SpecterScheduler {
     public static ScheduledFuture<?> scheduleWithFixedDelay(
             Runnable task, long initialDelay, long delay, TimeUnit unit
     ) {
+        LOGGER.log(Level.INFO, "Scheduled repeating task {0}", task);
         return executor.scheduleWithFixedDelay(wrap(task), initialDelay, delay, unit);
     }
     /**
@@ -102,6 +110,7 @@ public class SpecterScheduler {
      */
     @SuppressWarnings("unused")
     public static ScheduledFuture<?> scheduleNow(Runnable task) {
+        LOGGER.log(Level.INFO, "Scheduled immediate task {0}", task);
         return executor.schedule(wrap(task), 0, TimeUnit.MILLISECONDS);
     }
     /**
@@ -114,6 +123,7 @@ public class SpecterScheduler {
      */
     @SuppressWarnings("unused")
     public static ScheduledFuture<?> scheduleAtFixedRateNow(Runnable task, long period, TimeUnit unit) {
+        LOGGER.log(Level.INFO, "Scheduled immediate repeating task {0}", task);
         return executor.scheduleAtFixedRate(wrap(task), 0, period, unit);
     }
     /**
@@ -126,6 +136,7 @@ public class SpecterScheduler {
     @SuppressWarnings("unused")
     public void setPoolSizeAndRestart(int newSize) {
         if (newSize <= 0) {
+            LOGGER.log(Level.SEVERE, "Pool size must be positive, got: {0}", newSize);
             throw new IllegalArgumentException("Pool size must be positive");
         }
         shutdown();
@@ -139,6 +150,8 @@ public class SpecterScheduler {
                     return t;
                 }
         );
+        LOGGER.log(Level.INFO, "Scheduler restarted with pool size: {0}", newSize);
+        LOGGER.log(Level.INFO, "Current pool size: {0}", newSize);
     }
     /**
      * Shut down the scheduler (no new tasks will be accepted).
@@ -146,6 +159,7 @@ public class SpecterScheduler {
      */
     public static void shutdown() {
         executor.shutdown();
+        LOGGER.log(Level.INFO, "Scheduler shut down");
     }
     /**
      * Wraps your task in a try/catch to ensure exceptions get logged and don't kill the thread.
@@ -157,7 +171,8 @@ public class SpecterScheduler {
             try {
                 task.run();
             } catch (Throwable t) {
-                System.err.println("Error in scheduled task: " + t.getMessage());
+                log.error("Exception in scheduled task: {}", task, t);
+                LOGGER.log(Level.SEVERE, "Exception in scheduled task: " + task + " - " + t);
             }
         };
     }

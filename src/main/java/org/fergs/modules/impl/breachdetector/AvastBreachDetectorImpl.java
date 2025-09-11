@@ -1,6 +1,8 @@
 package org.fergs.modules.impl.breachdetector;
 
+import com.sun.javafx.util.Logging;
 import okhttp3.*;
+import org.fergs.managers.LoggingManager;
 import org.fergs.objects.Breach;
 import org.fergs.scheduler.SpecterScheduler;
 import org.fergs.ui.forms.BreachGraphForm;
@@ -16,12 +18,14 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 /**
  * AvastBreachDetectorImpl is a class that checks for data breaches associated with a given email address
  * using the Avast Identity Protection API. It supports proxy usage and displays results in the UI.
  */
 public final class AvastBreachDetectorImpl {
+    private static final LoggingManager LOGGER = LoggingManager.getInstance();
     private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final List<String> proxies;
     private final String proxyType;
@@ -96,7 +100,29 @@ public final class AvastBreachDetectorImpl {
 
             try (Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+                    jTextArea.append("[ERROR] HTTP " + response.code() + " for " + targetEmail + "\n");
+                    if (response.code() == 403 || response.code() == 429) {
+                        jTextArea.append("[ERROR] Your IP might be temporarily blocked by Avast. Please try again later.\n");
+                        running = false;
+                    }
+                    if (toDeleteProxy != null) {
+                        proxies.remove(toDeleteProxy);
+                        ToastNotification.builder(SpecterForm.frame)
+                                .setBackground(new Color(0x2A2A2A))
+                                .setTitleColor(new Color(0x00FF88))
+                                .setMessageColor(new Color(0xF5F5F5))
+                                .setTitleFont(new Font("JetBrains Mono", Font.BOLD, 16))
+                                .setMessageFont(new Font("JetBrains Mono", Font.PLAIN, 13))
+                                .setSize(255, 100)
+                                .setFadeInStep(25)
+                                .setFadeOutStep(35)
+                                .setDuration(3500)
+                                .setTitle("⚠︎ Proxy Removed")
+                                .setMessage("Removed non-working proxy: " + toDeleteProxy)
+                                .show();
+                    }
+                    LOGGER.log(Level.WARNING, "Non-successful HTTP response: " + response.code() + " for email: " + targetEmail);
+                    continue;
                 }
                 String body = Objects.requireNonNull(response.body()).string();
 
@@ -161,12 +187,25 @@ public final class AvastBreachDetectorImpl {
             } catch (IOException e) {
                 if (toDeleteProxy != null) {
                     proxies.remove(toDeleteProxy);
-                    System.err.println("Removed bad proxy: " + toDeleteProxy);
+                    ToastNotification.builder(SpecterForm.frame)
+                            .setBackground(new Color(0x2A2A2A))
+                            .setTitleColor(new Color(0x00FF88))
+                            .setMessageColor(new Color(0xF5F5F5))
+                            .setTitleFont(new Font("JetBrains Mono", Font.BOLD, 16))
+                            .setMessageFont(new Font("JetBrains Mono", Font.PLAIN, 13))
+                            .setSize(255, 100)
+                            .setFadeInStep(25)
+                            .setFadeOutStep(35)
+                            .setDuration(3500)
+                            .setTitle("⚠︎ Proxy Removed")
+                            .setMessage("Removed non-working proxy: " + toDeleteProxy)
+                            .show();
                 } else {
                     e.printStackTrace();
                     break;
                 }
             } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Exception in Breach Detected ", e);
                 throw new RuntimeException(e);
             }
         }

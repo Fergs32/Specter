@@ -2,10 +2,12 @@ package org.fergs.utils;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.fergs.managers.LoggingManager;
 
 import javax.sound.sampled.*;
 import java.io.IOException;
 import java.net.URL;
+import java.util.logging.Level;
 
 /**
  * A simple audio player for playing background music and sound effects.
@@ -119,6 +121,7 @@ public class AudioPlayer {
             clip.close();
             clip = null;
             gainControl = null;
+            LoggingManager.getInstance().log(Level.INFO, "Audio player stopped.");
         }
     }
     /**

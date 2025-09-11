@@ -56,6 +56,14 @@ public class SpecterForm extends AbstractForm {
 
         getContentPane().addMouseListener(ma);
         getContentPane().addMouseMotionListener(ma);
+
+        try {
+            Specter.getInstance().getLogger().showConsoleWindow();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Specter.getInstance().getLogger().info("Welcome to Specter " + Specter.getInstance().VERSION);
+        }
     }
 
     @Override
@@ -117,6 +125,7 @@ public class SpecterForm extends AbstractForm {
         exit.setPreferredSize(btnSize);
         exit.addActionListener(e -> {
             SpecterScheduler.shutdown();
+            Specter.getInstance().getLogger().shutdown();
             Specter.getInstance().getAudioPlayer().stop();
             System.exit(0);
         });
