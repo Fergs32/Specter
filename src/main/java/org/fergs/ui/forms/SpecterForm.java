@@ -6,6 +6,7 @@ import org.fergs.modules.AbstractModule;
 import org.fergs.modules.impl.breachdetector.AvastBreachDetectionUI;
 import org.fergs.modules.impl.dating.DateSearchEngineUI;
 import org.fergs.modules.impl.finders.DatabaseFinderUI;
+import org.fergs.modules.impl.tempemail.TempEmailUI;
 import org.fergs.scheduler.SpecterScheduler;
 import org.fergs.ui.AbstractForm;
 import org.fergs.ui.panels.InitializationParticlePanel;
@@ -88,7 +89,7 @@ public class SpecterForm extends AbstractForm {
         JButton leftIconButton = JHelper.createImageButton(
                 "/Specter-Logo.png",
                 46,
-                "https://github.com/your-repo"
+                "https://github.com/Fergs32/Specter"
         );
         leftIconButton.setPreferredSize(btnSize);
         leftIconButton.setMinimumSize(btnSize);
@@ -182,6 +183,7 @@ public class SpecterForm extends AbstractForm {
         Specter.getInstance().getModuleManager().registerModule(new AvastBreachDetectionUI());
         Specter.getInstance().getModuleManager().registerModule(new DatabaseFinderUI());
         Specter.getInstance().getModuleManager().registerModule(new DateSearchEngineUI());
+        Specter.getInstance().getModuleManager().registerModule(new TempEmailUI());
 
         SlidingPanel modulesPanel = new SlidingPanel(50, 220, 10, 10, (getHeight() - 50));
         modulesPanel.setRailBackground(new Color(0x2A2A2A));
@@ -194,21 +196,13 @@ public class SpecterForm extends AbstractForm {
                 modulesPanel.addModuleButton(name, 14, e -> {
                     Specter.getInstance().getModuleManager().enableModule(name);
                     JPanel moduleUI = mod.getUI();
-                    moduleUI.setPreferredSize(new Dimension(650, 475));
                     moduleUI.setOpaque(false);
-                    moduleUI.setBorder(new EmptyBorder(3, 3, 3, 3));
+                    moduleUI.setBorder(new EmptyBorder(10, 80, 10, 10));
 
                     JPanel contentRegion = getContentRegion();
                     contentRegion.removeAll();
-                    contentRegion.setLayout(new GridBagLayout());
-                    GridBagConstraints gridBagConstraints = new GridBagConstraints();
-                    gridBagConstraints.gridx = 0;
-                    gridBagConstraints.gridy = 0;
-                    gridBagConstraints.weightx = 1;
-                    gridBagConstraints.weighty = 1;
-                    gridBagConstraints.anchor = GridBagConstraints.CENTER;
-                    gridBagConstraints.fill = GridBagConstraints.NONE;
-                    contentRegion.add(moduleUI, gridBagConstraints);
+                    contentRegion.setLayout(new BorderLayout());
+                    contentRegion.add(moduleUI, BorderLayout.CENTER);
                     contentRegion.revalidate();
                     contentRegion.repaint();
                 });

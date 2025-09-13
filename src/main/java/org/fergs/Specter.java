@@ -8,8 +8,6 @@ import org.fergs.managers.ModuleManager;
 import org.fergs.ui.forms.InitializationForm;
 import org.fergs.utils.AudioPlayer;
 
-import javax.swing.*;
-
 /**
  * Specter is the main singleton class for the application.
  * It holds references to the ConfigurationManager, ModuleManager, and AudioPlayer.

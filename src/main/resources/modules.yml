@@ -6,3 +6,4 @@ enabled-modules:
   - "google-dorks"
   - "phone-cnam-lookup"
   - "reverse-phone-lookup"
+  - "temp-email"

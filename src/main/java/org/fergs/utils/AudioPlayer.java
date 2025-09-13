@@ -81,6 +81,11 @@ public class AudioPlayer {
             hoverClip.stop();
         }
 
+        if (gainControl != null) {
+            FloatControl hoverGain = (FloatControl) hoverClip.getControl(FloatControl.Type.MASTER_GAIN);
+            hoverGain.setValue(gainControl.getValue());
+        }
+
         hoverClip.setFramePosition(0);
 
         hoverClip.start();

@@ -34,7 +34,6 @@ public final class DateSearchEngineImpl {
     private final String proxyType;
     private final String targetName;
 
-    // Filter parameters
     private final String ageRange;
     private final String location;
     private final String platform;
@@ -69,14 +68,14 @@ public final class DateSearchEngineImpl {
                 .addArguments("--headless","--disable-gpu","--window-size=1920,1080");
         applyProxy(opts);
 
-        WebDriver driver = new ChromeDriver(opts);
-        List<SearchResult> all = new ArrayList<>();
+        final WebDriver driver = new ChromeDriver(opts);
+        final List<SearchResult> all = new ArrayList<>();
+        final Set<String> seenUrls = new HashSet<>();
 
         try {
             String searchQuery = buildSearchQuery();
             String url = "https://cse.google.com/cse?cx=c7b340447e1e12653&q=" +
                     URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
-
 
             LOGGER.log(Level.INFO, "Searching for: {0}", searchQuery);
             driver.get(url);
@@ -104,16 +103,24 @@ public final class DateSearchEngineImpl {
                         List<WebElement> imgs = item.findElements(By.tagName("img"));
                         if (!imgs.isEmpty()) thumb = imgs.get(0).getAttribute("src");
 
+                        assert link != null;
+
+                        // Skip URLs containing /places/
+                        if (link.contains("/places/")) continue;
+
+                        // Skip duplicate URLs
+                        if (seenUrls.contains(link)) continue;
+
+                        seenUrls.add(link); // Add to seen URLs set
+
                         SearchResult result = new SearchResult(title, link, thumb);
 
-                        // Apply client-side filtering
                         if (shouldIncludeResult(result)) {
                             all.add(result);
                         }
 
-                        // Stop if we've reached max results
                         if (all.size() >= maxResults) {
-                            return all;
+                            return applySorting(all);
                         }
 
                     } catch (Exception ie) {
@@ -167,30 +174,57 @@ public final class DateSearchEngineImpl {
     private String buildSearchQuery() {
         StringBuilder query = new StringBuilder(targetName);
 
-        // Add platform-specific search terms
         if (!"All".equals(platform)) {
-            query.append(" site:").append(getPlatformSite(platform));
+            String platformSite = getPlatformSite(platform);
+            if (!platformSite.isEmpty()) {
+                query.append(" site:").append(platformSite);
+            }
         }
 
-        // Add age-related search terms
         if (!"Any".equals(ageRange)) {
-            query.append(" \"").append(ageRange).append("\"");
+            query.append(" (");
+            query.append("\"").append(ageRange).append("\"");
+
+            String[] ageParts = ageRange.split("-");
+            if (ageParts.length == 2) {
+                query.append(" OR \"age ").append(ageParts[0]).append("\"");
+                query.append(" OR \"").append(ageParts[0]).append(" years old\"");
+                query.append(" OR \"").append(ageParts[1]).append(" years old\"");
+            } else if (ageRange.equals("55+")) {
+                query.append(" OR \"55 years old\" OR \"60 years old\" OR \"mature\"");
+            }
+            query.append(")");
         }
 
-        // Add location-based terms
-        if (!"Any".equals(location) && !location.startsWith("Within")) {
-            query.append(" \"").append(location).append("\"");
+        if (!"Any".equals(location)) {
+            query.append(" (");
+            if (location.startsWith("Within")) {
+                String miles = location.replaceAll("[^0-9]", "");
+                query.append("\"within ").append(miles).append(" miles\"");
+                query.append(" OR \"").append(miles).append(" miles away\"");
+                query.append(" OR \"nearby\" OR \"local\"");
+            } else if (location.equals("Same city")) {
+                query.append("\"same city\" OR \"local\" OR \"in my city\"");
+            } else if (location.equals("Same state")) {
+                query.append("\"same state\" OR \"in state\" OR \"local area\"");
+            } else {
+                query.append("\"").append(location).append("\"");
+            }
+            query.append(")");
         }
 
-        // Add photo-related terms
+        // Add photo-related terms with more variations
         if (photosOnly) {
-            query.append(" (photo OR picture OR image)");
+            query.append(" (photo OR picture OR image OR pics OR \"profile pic\" OR \"profile photo\" OR selfie)");
         }
 
-        // Add verification terms
+        // Add verification terms with more comprehensive patterns
         if (verifiedOnly) {
-            query.append(" (verified OR authentic)");
+            query.append(" (verified OR authentic OR \"verified profile\" OR \"real profile\" OR confirmed OR validated)");
         }
+
+        // Add dating-specific keywords to improve relevance
+        query.append(" (dating OR profile OR single OR \"looking for\" OR relationship OR match)");
 
         return query.toString();
     }
@@ -209,27 +243,101 @@ public final class DateSearchEngineImpl {
     }
 
     private boolean shouldIncludeResult(SearchResult result) {
+        String titleLower = result.title.toLowerCase();
+        String urlLower = result.url.toLowerCase();
+
         // Apply photos only filter
         if (photosOnly && (result.thumbnail == null || result.thumbnail.isEmpty())) {
             return false;
         }
 
-        // Apply platform filter (check if URL contains platform domain)
         if (!"All".equals(platform)) {
             String platformSite = getPlatformSite(platform);
-            if (!platformSite.isEmpty() && !result.url.toLowerCase().contains(platformSite)) {
+            if (!platformSite.isEmpty() && !urlLower.contains(platformSite)) {
                 return false;
             }
         }
 
-        // Apply verification filter (check title/URL for verification indicators)
-        if (verifiedOnly) {
-            String titleLower = result.title.toLowerCase();
-            String urlLower = result.url.toLowerCase();
-            if (!titleLower.contains("verified") && !titleLower.contains("authentic") &&
-                    !urlLower.contains("verified") && !urlLower.contains("authentic")) {
+        if (!"Any".equals(ageRange)) {
+            boolean ageMatch = false;
+
+            if (ageRange.equals("55+")) {
+                // Check for 55+ indicators
+                ageMatch = titleLower.matches(".*\\b(5[5-9]|[6-9]\\d)\\b.*") ||
+                          titleLower.contains("mature") ||
+                          titleLower.contains("senior") ||
+                          titleLower.contains("older");
+            } else {
+                String[] ageParts = ageRange.split("-");
+                if (ageParts.length == 2) {
+                    int minAge = Integer.parseInt(ageParts[0]);
+                    int maxAge = Integer.parseInt(ageParts[1]);
+
+                    for (int age = minAge; age <= maxAge; age++) {
+                        if (titleLower.contains(String.valueOf(age)) || urlLower.contains(String.valueOf(age))) {
+                            ageMatch = true;
+                            break;
+                        }
+                    }
+
+                    if (titleLower.contains(ageRange) || urlLower.contains(ageRange)) {
+                        ageMatch = true;
+                    }
+                }
+            }
+
+            if (!ageMatch) {
                 return false;
             }
+        }
+
+        if (!"Any".equals(location)) {
+            boolean locationMatch = false;
+
+            if (location.startsWith("Within")) {
+                locationMatch = titleLower.contains("nearby") ||
+                               titleLower.contains("local") ||
+                               titleLower.contains("miles") ||
+                               titleLower.contains("close") ||
+                               urlLower.contains("local");
+            } else if (location.equals("Same city")) {
+                locationMatch = titleLower.contains("city") ||
+                               titleLower.contains("local") ||
+                               titleLower.contains("downtown") ||
+                               titleLower.contains("metro");
+            } else if (location.equals("Same state")) {
+                locationMatch = titleLower.contains("state") ||
+                               titleLower.contains("region") ||
+                               titleLower.contains("area");
+            }
+
+            // If we're filtering by location and don't find indicators, exclude
+            if (!locationMatch) {
+                return false;
+            }
+        }
+
+        // Apply verification filter with enhanced patterns
+        if (verifiedOnly) {
+            boolean verificationMatch = titleLower.contains("verified") ||
+                                       titleLower.contains("authentic") ||
+                                       titleLower.contains("confirmed") ||
+                                       titleLower.contains("validated") ||
+                                       titleLower.contains("real") ||
+                                       titleLower.contains("genuine") ||
+                                       urlLower.contains("verified") ||
+                                       urlLower.contains("authentic") ||
+                                       urlLower.contains("confirmed");
+
+            if (!verificationMatch) {
+                return false;
+            }
+        }
+
+        // Additional quality filters - exclude obviously irrelevant results
+        if (titleLower.contains("spam") || titleLower.contains("fake") ||
+            titleLower.contains("scam") || titleLower.contains("bot")) {
+            return false;
         }
 
         return true;
@@ -238,21 +346,127 @@ public final class DateSearchEngineImpl {
     private List<SearchResult> applySorting(List<SearchResult> results) {
         return switch (sortBy) {
             case "Most Recent" -> results.stream()
-                    .sorted((a, b) -> b.url.compareTo(a.url)) // Simple URL-based sorting
+                    .sorted((a, b) -> {
+                        int scoreA = getRecencyScore(a);
+                        int scoreB = getRecencyScore(b);
+                        return Integer.compare(scoreB, scoreA); // Higher score = more recent
+                    })
                     .collect(Collectors.toList());
+
             case "Distance" -> results.stream()
-                    .sorted(Comparator.comparingInt(a -> a.title.length())) // Title length as proxy
+                    .sorted((a, b) -> {
+                        int distanceScoreA = getDistanceScore(a);
+                        int distanceScoreB = getDistanceScore(b);
+                        return Integer.compare(distanceScoreB, distanceScoreA); // Higher score = closer
+                    })
                     .collect(Collectors.toList());
+
             case "Activity" -> results.stream()
-                    .sorted((a, b) -> Boolean.compare(
-                            b.thumbnail != null && !b.thumbnail.isEmpty(),
-                            a.thumbnail != null && !a.thumbnail.isEmpty())) // Results with images first
+                    .sorted((a, b) -> {
+                        int activityScoreA = getActivityScore(a);
+                        int activityScoreB = getActivityScore(b);
+                        return Integer.compare(activityScoreB, activityScoreA); // Higher score = more active
+                    })
                     .collect(Collectors.toList());
+
             case "Profile Quality" -> results.stream()
-                    .sorted((a, b) -> Integer.compare(b.title.length(), a.title.length())) // Longer titles = better quality
+                    .sorted((a, b) -> {
+                        int qualityScoreA = getProfileQualityScore(a);
+                        int qualityScoreB = getProfileQualityScore(b);
+                        return Integer.compare(qualityScoreB, qualityScoreA); // Higher score = better quality
+                    })
                     .collect(Collectors.toList());
-            default -> results; // Relevance (original order)
+
+            default -> results; // Relevance (original order from search engine)
         };
+    }
+
+    private int getRecencyScore(SearchResult result) {
+        String titleLower = result.title.toLowerCase();
+        String urlLower = result.url.toLowerCase();
+        int score = 0;
+
+        // Look for recent time indicators
+        if (titleLower.contains("today") || titleLower.contains("now")) score += 10;
+        if (titleLower.contains("recent") || titleLower.contains("new")) score += 8;
+        if (titleLower.contains("online") || titleLower.contains("active")) score += 6;
+        if (titleLower.contains("2024") || titleLower.contains("2025")) score += 5;
+        if (titleLower.contains("updated") || titleLower.contains("fresh")) score += 4;
+
+        // URL patterns that suggest recent content
+        if (urlLower.contains("2024") || urlLower.contains("2025")) score += 3;
+        if (urlLower.contains("recent") || urlLower.contains("new")) score += 2;
+
+        return score;
+    }
+
+    private int getDistanceScore(SearchResult result) {
+        String titleLower = result.title.toLowerCase();
+        String urlLower = result.url.toLowerCase();
+        int score = 0;
+
+        // Proximity indicators (higher score = closer/better)
+        if (titleLower.contains("nearby") || titleLower.contains("close")) score += 10;
+        if (titleLower.contains("local")) score += 8;
+        if (titleLower.contains("miles")) score += 6;
+        if (titleLower.contains("city") || titleLower.contains("downtown")) score += 4;
+        if (titleLower.contains("area") || titleLower.contains("region")) score += 3;
+
+        // URL indicators
+        if (urlLower.contains("local")) score += 2;
+
+        return score;
+    }
+
+    private int getActivityScore(SearchResult result) {
+        String titleLower = result.title.toLowerCase();
+        String urlLower = result.url.toLowerCase();
+        int score = 0;
+
+        // Image presence (strong activity indicator)
+        if (result.thumbnail != null && !result.thumbnail.isEmpty()) score += 15;
+
+        // Activity keywords
+        if (titleLower.contains("online") || titleLower.contains("active")) score += 10;
+        if (titleLower.contains("recently") || titleLower.contains("today")) score += 8;
+        if (titleLower.contains("messages") || titleLower.contains("chat")) score += 6;
+        if (titleLower.contains("responses") || titleLower.contains("replies")) score += 5;
+        if (titleLower.contains("views") || titleLower.contains("visits")) score += 4;
+        if (titleLower.contains("likes") || titleLower.contains("matches")) score += 3;
+
+        // Platform activity indicators
+        if (urlLower.contains("profile") && urlLower.contains("active")) score += 5;
+
+        return score;
+    }
+
+    private int getProfileQualityScore(SearchResult result) {
+        String titleLower = result.title.toLowerCase();
+        String urlLower = result.url.toLowerCase();
+        int score = 0;
+
+        score += Math.min(result.title.length() / 10, 15);
+
+        if (result.thumbnail != null && !result.thumbnail.isEmpty()) score += 20;
+
+        if (titleLower.contains("verified") || titleLower.contains("authentic")) score += 25;
+        if (titleLower.contains("premium") || titleLower.contains("plus")) score += 15;
+
+        if (titleLower.contains("photos") || titleLower.contains("pictures")) score += 10;
+        if (titleLower.contains("education") || titleLower.contains("profession")) score += 8;
+        if (titleLower.contains("interests") || titleLower.contains("hobbies")) score += 6;
+        if (titleLower.contains("about") || titleLower.contains("description")) score += 5;
+
+        if (titleLower.contains("reviews") || titleLower.contains("ratings")) score += 12;
+        if (titleLower.contains("connections") || titleLower.contains("matches")) score += 8;
+
+        if (titleLower.contains("incomplete") || titleLower.contains("basic")) score -= 10;
+        if (titleLower.contains("limited") || titleLower.contains("partial")) score -= 5;
+
+        if (urlLower.contains("premium") || urlLower.contains("verified")) score += 5;
+        if (urlLower.contains("profile") && urlLower.contains("complete")) score += 3;
+
+        return Math.max(score, 0); // Ensure non-negative score
     }
 
     private void applyProxy(ChromeOptions opts) {
@@ -272,13 +486,4 @@ public final class DateSearchEngineImpl {
             opts.setProxy(selProxy);
         }
     }
-
-    // Getters for filter parameters
-    public String getAgeRange() { return ageRange; }
-    public String getLocation() { return location; }
-    public String getPlatform() { return platform; }
-    public String getSortBy() { return sortBy; }
-    public int getMaxResults() { return maxResults; }
-    public boolean isPhotosOnly() { return photosOnly; }
-    public boolean isVerifiedOnly() { return verifiedOnly; }
 }

@@ -61,6 +61,18 @@ public final class DateSearchEngineUI extends AbstractModule {
         tabbedPane.setBackground(new Color(0x1E1E1E));
         tabbedPane.setForeground(new Color(0x66FFCC));
         tabbedPane.setFont(new Font("Consolas", Font.PLAIN, 12));
+        // make it so it has no white border glow, but rather a subtle gray (contentAreaColor)
+        tabbedPane.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
+            @Override
+            protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) { /* no border */ }
+            // make the little tab things not have the white background glow
+            @Override
+            protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setColor(isSelected ? new Color(0x141414) : new Color(0x1E1E1E));
+                g2.fillRect(x, y, w, h);
+            }
+        });
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -302,7 +314,6 @@ public final class DateSearchEngineUI extends AbstractModule {
         checkbox.setFont(new Font("Consolas", Font.PLAIN, 11));
         checkbox.setFocusPainted(false);
 
-        // Custom checkbox icon
         checkbox.setIcon(createCheckboxIcon(false));
         checkbox.setSelectedIcon(createCheckboxIcon(true));
 
@@ -357,14 +368,12 @@ public final class DateSearchEngineUI extends AbstractModule {
                 .setMessage("Filters Applied")
                 .show();
 
-        // so we've stored our original results, now we just need to re-apply the filter
     }
 
     private void performSearch(String name, String proxyType) {
         new SwingWorker<List<SearchResult>, SearchResult>() {
             @Override
             protected List<SearchResult> doInBackground() {
-                // Get filter values
                 String ageRange = (String) ageRangeCombo.getSelectedItem();
                 String location = (String) locationCombo.getSelectedItem();
                 String platform = (String) platformCombo.getSelectedItem();
@@ -373,7 +382,6 @@ public final class DateSearchEngineUI extends AbstractModule {
                 boolean photosOnly = profilePicsOnlyCheck.isSelected();
                 boolean verifiedOnly = verifiedOnlyCheck.isSelected();
 
-                // Create enhanced search implementation with filters
                 DateSearchEngineImpl impl = new DateSearchEngineImpl(
                         Specter.getInstance().getConfigurationManager().loadLinesFromClasspath("proxies.txt"),
                         proxyType,
@@ -389,8 +397,6 @@ public final class DateSearchEngineUI extends AbstractModule {
 
                 LOGGER.info("Starting search for name: " + name + " using proxy type: " + proxyType);
 
-                // You would modify DateSearchEngineImpl to accept these filter parameters
-                // For now, using the existing implementation
                 return impl.run();
             }
 
@@ -400,7 +406,6 @@ public final class DateSearchEngineUI extends AbstractModule {
                     results = get();
                     int maxResults = (Integer) maxResultsSpinner.getValue();
 
-                    // Apply client-side filtering
                     results = results.stream()
                             .limit(maxResults)
                             .filter(r -> !profilePicsOnlyCheck.isSelected() ||
